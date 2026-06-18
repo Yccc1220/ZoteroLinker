@@ -1,0 +1,25 @@
+# Visual Studio / VSTO local state
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.pdb
+*.cache
+*.vsidx
+
+# Build and publish output
+Debug/
+Release/
+app.publish/
+Application Files/
+
+# Temporary signing keys and local secrets
+*.pfx
+*.snk
+
+# OS/editor noise
+Thumbs.db
+Desktop.ini
+*.tmp
+*.log
