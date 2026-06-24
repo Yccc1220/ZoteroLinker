@@ -13,6 +13,10 @@ Debug/
 Release/
 app.publish/
 Application Files/
+!release/
+!release/README.md
+!release/*.exe
+!release/*.sha256
 
 # Temporary signing keys and local secrets
 *.pfx

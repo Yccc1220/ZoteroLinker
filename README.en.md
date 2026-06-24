@@ -32,6 +32,16 @@ Zotero Linker does not replace Zotero. Instead, it fills this navigation and for
 
 Note: If Zotero citations have been converted to plain text, the add-in may not be able to read the full Zotero field data, and some advanced features may not work.
 
+## Installation
+
+Download the installer from GitHub Releases:
+
+```text
+ZoteroLinkerSetup-1.0.0.exe
+```
+
+Run the installer as administrator, then reopen Microsoft Word or WPS Word/Writer.
+
 ## Basic Usage
 
 1. Install the add-in and open Microsoft Word or WPS Word/Writer.
@@ -53,11 +63,13 @@ In short:
 
 ## Repository Contents
 
-- `Zotero Linker.exe`: Windows installer
-- `Zotero-linker/`: source code
+- `release/`: built Windows installer and SHA-256 checksum
+- `Zotero-linker/`: VSTO add-in source code
 - `README.md`: Chinese documentation
 - `README.en.md`: English documentation
 
 ## Notes
 
 This add-in is mainly intended for Windows desktop writing workflows where Zotero is used together with Word or WPS Word/Writer.
+
+

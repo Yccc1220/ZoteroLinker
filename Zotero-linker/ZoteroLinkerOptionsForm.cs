@@ -24,18 +24,23 @@ namespace Zotero_linker
                 options = new ZoteroLinkerOptions();
             }
 
+            SuspendLayout();
+
             Text = "Zotero Linker Options";
             FormBorderStyle = FormBorderStyle.FixedDialog;
             StartPosition = FormStartPosition.CenterParent;
             MaximizeBox = false;
             MinimizeBox = false;
-            ClientSize = new Size(320, 180);
+            AutoScaleMode = AutoScaleMode.Dpi;
+            AutoSize = true;
+            AutoSizeMode = AutoSizeMode.GrowAndShrink;
             Font = SystemFonts.MessageBoxFont;
+            Padding = new Padding(16, 14, 16, 14);
 
             Label colorLabel = new Label
             {
                 AutoSize = true,
-                Location = new Point(16, 18),
+                Margin = new Padding(0, 0, 0, 4),
                 Text = "Citation color"
             };
 
@@ -43,10 +48,12 @@ namespace Zotero_linker
             {
                 DrawMode = DrawMode.OwnerDrawFixed,
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                ItemHeight = 22,
-                Location = new Point(16, 40),
-                Width = 170
+                IntegralHeight = false,
+                ItemHeight = Math.Max(Font.Height + 8, 24),
+                Margin = new Padding(0, 0, 0, 12),
+                Width = Math.Max(220, TextRenderer.MeasureText("Green (#00FF00)", Font).Width + 56)
             };
+            colorComboBox.DropDownWidth = colorComboBox.Width;
             colorComboBox.DrawItem += ColorComboBox_DrawItem;
             colorComboBox.Items.Add(new ColorOption("Red", "#FF0000", Color.FromArgb(255, 0, 0)));
             colorComboBox.Items.Add(new ColorOption("Blue", "#0000FF", Color.FromArgb(0, 0, 255)));
@@ -57,46 +64,76 @@ namespace Zotero_linker
             Label fontLabel = new Label
             {
                 AutoSize = true,
-                Location = new Point(16, 80),
+                Margin = new Padding(0, 0, 0, 4),
                 Text = "Citation font size (pt)"
             };
 
             fontSizeUpDown = new NumericUpDown
             {
-                Location = new Point(16, 102),
-                Width = 100,
+                AutoSize = true,
                 DecimalPlaces = 1,
                 Minimum = (decimal)ZoteroLinkerOptions.MinFontSize,
                 Maximum = (decimal)ZoteroLinkerOptions.MaxFontSize,
+                Margin = new Padding(0, 0, 0, 14),
                 Increment = 0.5M,
-                Value = (decimal)ZoteroLinkerOptions.ClampFontSize(options.FontSize)
+                Value = (decimal)ZoteroLinkerOptions.ClampFontSize(options.FontSize),
+                Width = Math.Max(100, TextRenderer.MeasureText("00.0", Font).Width + 44)
             };
 
             saveButton = new Button
             {
+                AutoSize = true,
+                MinimumSize = new Size(84, 0),
                 Text = "Save",
-                DialogResult = DialogResult.OK,
-                Location = new Point(136, 136),
-                Width = 80
+                DialogResult = DialogResult.OK
             };
 
             cancelButton = new Button
             {
+                AutoSize = true,
+                MinimumSize = new Size(84, 0),
                 Text = "Cancel",
-                DialogResult = DialogResult.Cancel,
-                Location = new Point(224, 136),
-                Width = 80
+                DialogResult = DialogResult.Cancel
             };
 
-            Controls.Add(colorLabel);
-            Controls.Add(colorComboBox);
-            Controls.Add(fontLabel);
-            Controls.Add(fontSizeUpDown);
-            Controls.Add(saveButton);
-            Controls.Add(cancelButton);
+            FlowLayoutPanel buttonsPanel = new FlowLayoutPanel
+            {
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Anchor = AnchorStyles.Right,
+                FlowDirection = FlowDirection.LeftToRight,
+                Margin = new Padding(0),
+                WrapContents = false
+            };
+            buttonsPanel.Controls.Add(saveButton);
+            buttonsPanel.Controls.Add(cancelButton);
+
+            TableLayoutPanel layout = new TableLayoutPanel
+            {
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                ColumnCount = 1,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0),
+                RowCount = 5
+            };
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layout.Controls.Add(colorLabel, 0, 0);
+            layout.Controls.Add(colorComboBox, 0, 1);
+            layout.Controls.Add(fontLabel, 0, 2);
+            layout.Controls.Add(fontSizeUpDown, 0, 3);
+            layout.Controls.Add(buttonsPanel, 0, 4);
+            Controls.Add(layout);
 
             AcceptButton = saveButton;
             CancelButton = cancelButton;
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         internal string ColorHex
@@ -138,22 +175,28 @@ namespace Zotero_linker
             }
 
             ColorOption option = (ColorOption)colorComboBox.Items[e.Index];
-            Rectangle swatch = new Rectangle(e.Bounds.Left + 6, e.Bounds.Top + 5, 18, 12);
+            int swatchWidth = Math.Max(18, e.Font.Height);
+            int swatchHeight = Math.Max(12, e.Font.Height - 4);
+            int swatchTop = e.Bounds.Top + Math.Max(2, (e.Bounds.Height - swatchHeight) / 2);
+            Rectangle swatch = new Rectangle(e.Bounds.Left + 6, swatchTop, swatchWidth, swatchHeight);
             using (SolidBrush brush = new SolidBrush(option.Color))
             {
                 e.Graphics.FillRectangle(brush, swatch);
             }
 
             e.Graphics.DrawRectangle(SystemPens.ControlDark, swatch);
-            using (SolidBrush textBrush = new SolidBrush(e.ForeColor))
-            {
-                e.Graphics.DrawString(
-                    string.Format(CultureInfo.InvariantCulture, "{0} ({1})", option.Name, option.Hex),
-                    e.Font,
-                    textBrush,
-                    e.Bounds.Left + 32,
-                    e.Bounds.Top + 3);
-            }
+            Rectangle textBounds = new Rectangle(
+                swatch.Right + 8,
+                e.Bounds.Top,
+                Math.Max(0, e.Bounds.Right - swatch.Right - 12),
+                e.Bounds.Height);
+            TextRenderer.DrawText(
+                e.Graphics,
+                string.Format(CultureInfo.InvariantCulture, "{0} ({1})", option.Name, option.Hex),
+                e.Font,
+                textBounds,
+                e.ForeColor,
+                TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis);
 
             e.DrawFocusRectangle();
         }

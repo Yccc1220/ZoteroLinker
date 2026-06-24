@@ -295,6 +295,7 @@
   <PropertyGroup>
     <ManifestCertificateThumbprint>F3E7B386DDDFD00E304282C929C0F08352FE3E3E</ManifestCertificateThumbprint>
   </PropertyGroup>
+  <Import Project="Zotero-linker.user.props" Condition="Exists('Zotero-linker.user.props')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- Include additional build rules for an Office application add-in. -->
   <Import Project="$(VSToolsPath)\OfficeTools\Microsoft.VisualStudio.Tools.Office.targets" Condition="'$(VSToolsPath)' != ''" />
