@@ -99,6 +99,9 @@ jobs:
           find publish-assets -type f -name "ZoteroLinkerSetup-${{ needs.validate-installer.outputs.version }}.exe.sha256" -exec cp -v {} publish-assets-flat/ \;
           test -f "publish-assets-flat/ZoteroLinkerSetup-${{ needs.validate-installer.outputs.version }}.exe"
           test -f "publish-assets-flat/ZoteroLinkerSetup-${{ needs.validate-installer.outputs.version }}.exe.sha256"
+          cp -v "publish-assets-flat/ZoteroLinkerSetup-${{ needs.validate-installer.outputs.version }}.exe" "publish-assets-flat/ZoteroLinkerSetup.exe"
+          latest_hash="$(sha256sum "publish-assets-flat/ZoteroLinkerSetup.exe" | awk '{print $1}')"
+          printf "%s  ZoteroLinkerSetup.exe\n" "$latest_hash" > "publish-assets-flat/ZoteroLinkerSetup.exe.sha256"
 
       - name: Create or update release
         uses: softprops/action-gh-release@v2
@@ -108,9 +111,11 @@ jobs:
           files: |
             publish-assets-flat/ZoteroLinkerSetup-${{ needs.validate-installer.outputs.version }}.exe
             publish-assets-flat/ZoteroLinkerSetup-${{ needs.validate-installer.outputs.version }}.exe.sha256
+            publish-assets-flat/ZoteroLinkerSetup.exe
+            publish-assets-flat/ZoteroLinkerSetup.exe.sha256
           body: |
             Zotero Linker ${{ needs.validate-installer.outputs.version }}
 
             Windows installer for Microsoft Word and WPS Writer.
 
-            Download `ZoteroLinkerSetup-${{ needs.validate-installer.outputs.version }}.exe` and run it as administrator.
+            Download `ZoteroLinkerSetup.exe` for the latest installer, or use the versioned installer for archival reproducibility.
