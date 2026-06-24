@@ -14,7 +14,6 @@ Release/
 app.publish/
 Application Files/
 !release/
-!release/README.md
 !release/*.exe
 !release/*.sha256
 
