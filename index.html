@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zotero Linker 下载</title>
+  <meta name="description" content="下载 Zotero Linker 最新版本，查看当前版本号和发布信息。">
+  <link rel="icon" href="./assets/zotero-linker.ico">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fb;
+      --ink: #17202f;
+      --muted: #5f6b7d;
+      --line: #dce2ea;
+      --panel: #ffffff;
+      --accent: #0f766e;
+      --accent-ink: #ffffff;
+      --soft: #e7f4f1;
+      --shadow: 0 24px 70px rgba(42, 58, 86, 0.14);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        linear-gradient(120deg, rgba(15, 118, 110, 0.09), transparent 36%),
+        linear-gradient(180deg, #ffffff 0%, var(--bg) 58%, #eef3f7 100%);
+      color: var(--ink);
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .page {
+      width: min(1120px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 36px 0 44px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      min-height: 56px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+
+    .brand img {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      box-shadow: 0 10px 22px rgba(15, 118, 110, 0.18);
+    }
+
+    .nav-link {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      border-bottom: 1px solid transparent;
+    }
+
+    .nav-link:hover {
+      color: var(--ink);
+      border-color: var(--ink);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.72fr);
+      gap: 32px;
+      align-items: center;
+      padding: 74px 0 48px;
+    }
+
+    .hero-copy {
+      max-width: 680px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 18px;
+      padding: 8px 12px;
+      border: 1px solid rgba(15, 118, 110, 0.18);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 720;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 760px;
+      font-size: clamp(44px, 6vw, 84px);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      max-width: 62ch;
+      margin: 24px 0 0;
+      color: var(--muted);
+      font-size: clamp(17px, 2vw, 20px);
+      line-height: 1.65;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 34px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 50px;
+      padding: 0 20px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-size: 15px;
+      font-weight: 760;
+      text-decoration: none;
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+      white-space: nowrap;
+    }
+
+    .button:active {
+      transform: translateY(1px);
+    }
+
+    .button.primary {
+      background: var(--accent);
+      color: var(--accent-ink);
+      box-shadow: 0 16px 34px rgba(15, 118, 110, 0.26);
+    }
+
+    .button.primary:hover {
+      box-shadow: 0 20px 44px rgba(15, 118, 110, 0.32);
+    }
+
+    .button.secondary {
+      border-color: var(--line);
+      background: rgba(255, 255, 255, 0.74);
+      color: var(--ink);
+    }
+
+    .download-panel {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(220, 226, 234, 0.88);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.86);
+      box-shadow: var(--shadow);
+    }
+
+    .download-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(15, 118, 110, 0.14), transparent 42%);
+      pointer-events: none;
+    }
+
+    .panel-inner {
+      position: relative;
+      padding: 28px;
+    }
+
+    .app-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 16px;
+      box-shadow: 0 18px 34px rgba(15, 118, 110, 0.18);
+    }
+
+    .panel-title {
+      margin: 22px 0 6px;
+      font-size: 25px;
+      line-height: 1.2;
+    }
+
+    .panel-text {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .version-card {
+      display: grid;
+      gap: 12px;
+      margin-top: 24px;
+      padding: 16px;
+      border-radius: 14px;
+      background: var(--soft);
+      border: 1px solid rgba(15, 118, 110, 0.12);
+    }
+
+    .version-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .version-row strong {
+      color: var(--ink);
+      font-size: 15px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 30px;
+    }
+
+    .info-item {
+      min-height: 112px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.64);
+    }
+
+    .info-item h2 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      line-height: 1.25;
+    }
+
+    .info-item p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      margin-top: 34px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .footer a {
+      color: var(--ink);
+      text-decoration: none;
+      border-bottom: 1px solid var(--line);
+    }
+
+    @media (max-width: 860px) {
+      .page {
+        width: min(100% - 28px, 680px);
+        padding-top: 24px;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        padding-top: 48px;
+      }
+
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .footer {
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 460px) {
+      .nav {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .actions,
+      .button {
+        width: 100%;
+      }
+
+      .panel-inner {
+        padding: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <nav class="nav" aria-label="主导航">
+      <a class="brand" href="https://github.com/Yccc1220/ZoteroLinker" target="_blank" rel="noreferrer">
+        <img src="./assets/zotero-linker.ico" alt="Zotero Linker 图标">
+        <span>Zotero Linker</span>
+      </a>
+      <a class="nav-link" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest" target="_blank" rel="noreferrer">查看 GitHub Release</a>
+    </nav>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Windows Word / WPS Writer 插件</p>
+        <h1>让 Zotero 引文在长文档里更好跳转。</h1>
+        <p class="lead">下载最新版本的 Zotero Linker，为 Zotero 生成的正文引用和参考文献建立双向链接，并保留可修复的引用格式。</p>
+        <div class="actions">
+          <a class="button primary" id="downloadButton" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe">下载最新版</a>
+          <a class="button secondary" href="https://github.com/Yccc1220/ZoteroLinker" target="_blank" rel="noreferrer">查看源码</a>
+        </div>
+      </div>
+
+      <aside class="download-panel" aria-label="当前版本">
+        <div class="panel-inner">
+          <img class="app-icon" src="./assets/zotero-linker.ico" alt="">
+          <h2 class="panel-title">当前软件版本</h2>
+          <p class="panel-text">页面会从 GitHub Release 自动获取最新版本信息。</p>
+
+          <div class="version-card">
+            <div class="version-row">
+              <span>版本号</span>
+              <strong id="versionText">读取中</strong>
+            </div>
+            <div class="version-row">
+              <span>发布日期</span>
+              <strong id="dateText">读取中</strong>
+            </div>
+            <div class="version-row">
+              <span>安装包大小</span>
+              <strong id="sizeText">读取中</strong>
+            </div>
+            <div class="version-row">
+              <span>下载次数</span>
+              <strong id="downloadCountText">读取中</strong>
+            </div>
+          </div>
+
+          <span class="status" id="statusText">正在连接 GitHub Release。</span>
+        </div>
+      </aside>
+    </section>
+
+    <section class="info-grid" aria-label="软件信息">
+      <article class="info-item">
+        <h2>适用环境</h2>
+        <p>Windows 桌面端，支持 Microsoft Office Word，并针对 WPS Word/Writer 做了注册表适配。</p>
+      </article>
+      <article class="info-item">
+        <h2>核心能力</h2>
+        <p>正文引用跳转参考文献，参考文献返回正文引用，支持多文献和连续数字引用。</p>
+      </article>
+      <article class="info-item">
+        <h2>下载链接</h2>
+        <p>下载按钮使用固定最新版地址，发布新版本后无需修改网页链接。</p>
+      </article>
+    </section>
+
+    <footer class="footer">
+      <span>安装包文件名：ZoteroLinkerSetup.exe</span>
+      <a href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe.sha256">下载 SHA-256 校验文件</a>
+    </footer>
+  </main>
+
+  <script>
+    const apiUrl = "https://api.github.com/repos/Yccc1220/ZoteroLinker/releases/latest";
+    const latestDownloadUrl = "https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe";
+
+    const versionText = document.getElementById("versionText");
+    const dateText = document.getElementById("dateText");
+    const sizeText = document.getElementById("sizeText");
+    const downloadCountText = document.getElementById("downloadCountText");
+    const statusText = document.getElementById("statusText");
+    const downloadButton = document.getElementById("downloadButton");
+
+    function formatBytes(bytes) {
+      if (!Number.isFinite(bytes)) return "未知";
+      const units = ["B", "KB", "MB", "GB"];
+      let size = bytes;
+      let unitIndex = 0;
+      while (size >= 1024 && unitIndex < units.length - 1) {
+        size /= 1024;
+        unitIndex += 1;
+      }
+      return `${size.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+    }
+
+    function formatDate(value) {
+      if (!value) return "未知";
+      return new Intl.DateTimeFormat("zh-CN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).format(new Date(value));
+    }
+
+    async function loadRelease() {
+      try {
+        const response = await fetch(apiUrl, { headers: { "Accept": "application/vnd.github+json" } });
+        if (!response.ok) throw new Error(`GitHub API ${response.status}`);
+        const release = await response.json();
+        const latestAsset = (release.assets || []).find((asset) => asset.name === "ZoteroLinkerSetup.exe");
+        const versionedAsset = (release.assets || []).find((asset) => /^ZoteroLinkerSetup-\d+\.\d+\.\d+\.exe$/.test(asset.name));
+        const asset = latestAsset || versionedAsset;
+
+        versionText.textContent = release.tag_name || "未知";
+        dateText.textContent = formatDate(release.published_at || release.created_at);
+        sizeText.textContent = asset ? formatBytes(asset.size) : "未知";
+        downloadCountText.textContent = asset ? String(asset.download_count || 0) : "未知";
+        downloadButton.href = latestAsset ? latestAsset.browser_download_url : latestDownloadUrl;
+        statusText.textContent = asset ? "已获取最新发布信息。" : "已获取版本信息，但未找到安装包资产。";
+      } catch (error) {
+        versionText.textContent = "最新版本";
+        dateText.textContent = "请查看 GitHub";
+        sizeText.textContent = "约 2.8 MB";
+        downloadCountText.textContent = "暂不可用";
+        downloadButton.href = latestDownloadUrl;
+        statusText.textContent = "暂时无法读取 GitHub API，下载按钮仍指向最新版安装包。";
+      }
+    }
+
+    loadRelease();
+  </script>
+</body>
+</html>
