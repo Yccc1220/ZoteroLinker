@@ -118,16 +118,14 @@ jobs:
             cp "$notes_file" release-notes-body.md
           else
             cat > release-notes-body.md <<EOF
-          # Zotero Linker ${RELEASE_VERSION}
+## 中文
 
-          ## 中文
+本次发布包含 Windows 安装包更新。
 
-          本次发布包含 Windows 安装包更新。
+## English
 
-          ## English
-
-          This release contains an updated Windows installer.
-          EOF
+This release contains an updated Windows installer.
+EOF
           fi
 
       - name: Create or update release
