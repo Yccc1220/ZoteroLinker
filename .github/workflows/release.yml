@@ -79,6 +79,9 @@ jobs:
     needs: validate-installer
     if: ${{ startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.publish_assets) }}
     steps:
+      - name: Checkout release notes
+        uses: actions/checkout@v4
+
       - name: Download installer artifact
         uses: actions/download-artifact@v4
         with:
@@ -103,6 +106,30 @@ jobs:
           latest_hash="$(sha256sum "publish-assets-flat/ZoteroLinkerSetup.exe" | awk '{print $1}')"
           printf "%s  ZoteroLinkerSetup.exe\n" "$latest_hash" > "publish-assets-flat/ZoteroLinkerSetup.exe.sha256"
 
+      - name: Prepare release notes
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+          RELEASE_VERSION: ${{ needs.validate-installer.outputs.version }}
+        run: |
+          set -euo pipefail
+          notes_file="release-notes/${RELEASE_TAG}.md"
+          if [[ -f "$notes_file" ]]; then
+            cp "$notes_file" release-notes-body.md
+          else
+            cat > release-notes-body.md <<EOF
+          # Zotero Linker ${RELEASE_VERSION}
+
+          ## 中文
+
+          本次发布包含 Windows 安装包更新。
+
+          ## English
+
+          This release contains an updated Windows installer.
+          EOF
+          fi
+
       - name: Create or update release
         uses: softprops/action-gh-release@v2
         with:
@@ -113,9 +140,4 @@ jobs:
             publish-assets-flat/ZoteroLinkerSetup-${{ needs.validate-installer.outputs.version }}.exe.sha256
             publish-assets-flat/ZoteroLinkerSetup.exe
             publish-assets-flat/ZoteroLinkerSetup.exe.sha256
-          body: |
-            Zotero Linker ${{ needs.validate-installer.outputs.version }}
-
-            Windows installer for Microsoft Word and WPS Writer.
-
-            Download `ZoteroLinkerSetup.exe` for the latest installer, or use the versioned installer for archival reproducibility.
+          body_path: release-notes-body.md
