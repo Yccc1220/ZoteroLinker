@@ -369,7 +369,7 @@
               <strong id="sizeText">读取中</strong>
             </div>
             <div class="version-row">
-              <span>下载次数</span>
+              <span>累计下载次数</span>
               <strong id="downloadCountText">读取中</strong>
             </div>
           </div>
@@ -401,7 +401,8 @@
   </main>
 
   <script>
-    const apiUrl = "https://api.github.com/repos/Yccc1220/ZoteroLinker/releases/latest";
+    const latestReleaseApiUrl = "https://api.github.com/repos/Yccc1220/ZoteroLinker/releases/latest";
+    const releasesApiUrl = "https://api.github.com/repos/Yccc1220/ZoteroLinker/releases?per_page=100";
     const latestDownloadUrl = "https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe";
 
     const versionText = document.getElementById("versionText");
@@ -432,21 +433,44 @@
       }).format(new Date(value));
     }
 
+    function formatCount(value) {
+      return Number.isFinite(value) ? new Intl.NumberFormat("zh-CN").format(value) : "未知";
+    }
+
+    function findInstallerAsset(release) {
+      const assets = release.assets || [];
+      const latestAsset = assets.find((asset) => asset.name === "ZoteroLinkerSetup.exe");
+      const versionedAsset = assets.find((asset) => /^ZoteroLinkerSetup-\d+\.\d+\.\d+\.exe$/.test(asset.name));
+      return latestAsset || versionedAsset || null;
+    }
+
+    function countInstallerDownloads(releases) {
+      return releases.reduce((total, release) => {
+        const asset = findInstallerAsset(release);
+        return total + (asset ? asset.download_count || 0 : 0);
+      }, 0);
+    }
+
     async function loadRelease() {
       try {
-        const response = await fetch(apiUrl, { headers: { "Accept": "application/vnd.github+json" } });
-        if (!response.ok) throw new Error(`GitHub API ${response.status}`);
-        const release = await response.json();
-        const latestAsset = (release.assets || []).find((asset) => asset.name === "ZoteroLinkerSetup.exe");
-        const versionedAsset = (release.assets || []).find((asset) => /^ZoteroLinkerSetup-\d+\.\d+\.\d+\.exe$/.test(asset.name));
-        const asset = latestAsset || versionedAsset;
+        const [latestResponse, releasesResponse] = await Promise.all([
+          fetch(latestReleaseApiUrl, { headers: { "Accept": "application/vnd.github+json" } }),
+          fetch(releasesApiUrl, { headers: { "Accept": "application/vnd.github+json" } })
+        ]);
+        if (!latestResponse.ok) throw new Error(`GitHub latest API ${latestResponse.status}`);
+        if (!releasesResponse.ok) throw new Error(`GitHub releases API ${releasesResponse.status}`);
+
+        const release = await latestResponse.json();
+        const releases = await releasesResponse.json();
+        const asset = findInstallerAsset(release);
+        const totalDownloads = countInstallerDownloads(Array.isArray(releases) ? releases : [release]);
 
         versionText.textContent = release.tag_name || "未知";
         dateText.textContent = formatDate(release.published_at || release.created_at);
         sizeText.textContent = asset ? formatBytes(asset.size) : "未知";
-        downloadCountText.textContent = asset ? String(asset.download_count || 0) : "未知";
-        downloadButton.href = latestAsset ? latestAsset.browser_download_url : latestDownloadUrl;
-        statusText.textContent = asset ? "已获取最新发布信息。" : "已获取版本信息，但未找到安装包资产。";
+        downloadCountText.textContent = formatCount(totalDownloads);
+        downloadButton.href = asset && asset.name === "ZoteroLinkerSetup.exe" ? asset.browser_download_url : latestDownloadUrl;
+        statusText.textContent = asset ? "已获取最新发布信息和累计下载统计。" : "已获取版本信息，但未找到安装包资产。";
       } catch (error) {
         versionText.textContent = "最新版本";
         dateText.textContent = "请查看 GitHub";
