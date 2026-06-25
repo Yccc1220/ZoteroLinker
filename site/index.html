@@ -390,20 +390,23 @@
       </article>
       <article class="info-item">
         <h2>下载链接</h2>
-        <p>下载按钮使用固定最新版地址，发布新版本后无需修改网页链接。</p>
+        <p>下载按钮会自动读取最新版安装包，并按访问地区选择 GitHub 原始地址或国内镜像。</p>
       </article>
     </section>
 
     <footer class="footer">
       <span>安装包文件名：ZoteroLinkerSetup.exe</span>
-      <a href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe.sha256">下载 SHA-256 校验文件</a>
+      <a id="checksumLink" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe.sha256">下载 SHA-256 校验文件</a>
     </footer>
   </main>
 
   <script>
     const latestReleaseApiUrl = "https://api.github.com/repos/Yccc1220/ZoteroLinker/releases/latest";
     const releasesApiUrl = "https://api.github.com/repos/Yccc1220/ZoteroLinker/releases?per_page=100";
-    const latestDownloadUrl = "https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe";
+    const githubDownloadOrigin = "https://github.com";
+    const chinaMirrorOrigin = "https://kami666.xyz";
+    const latestDownloadUrl = `${githubDownloadOrigin}/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe`;
+    const latestChecksumUrl = `${latestDownloadUrl}.sha256`;
 
     const versionText = document.getElementById("versionText");
     const dateText = document.getElementById("dateText");
@@ -411,6 +414,12 @@
     const downloadCountText = document.getElementById("downloadCountText");
     const statusText = document.getElementById("statusText");
     const downloadButton = document.getElementById("downloadButton");
+    const checksumLink = document.getElementById("checksumLink");
+
+    let preferChinaMirror = getDownloadRouteOverride() ?? hasChinaLocalSignal();
+    let currentDownloadUrl = latestDownloadUrl;
+    let currentChecksumUrl = latestChecksumUrl;
+    let currentStatusMessage = "正在连接 GitHub Release。";
 
     function formatBytes(bytes) {
       if (!Number.isFinite(bytes)) return "未知";
@@ -435,6 +444,73 @@
 
     function formatCount(value) {
       return Number.isFinite(value) ? new Intl.NumberFormat("zh-CN").format(value) : "未知";
+    }
+
+    function getDownloadRouteOverride() {
+      const route = new URLSearchParams(window.location.search).get("download");
+      if (!route) return null;
+      const normalized = route.toLowerCase();
+      if (["cn", "china", "mirror", "kami"].includes(normalized)) return true;
+      if (["github", "global", "origin"].includes(normalized)) return false;
+      return null;
+    }
+
+    function hasChinaLocalSignal() {
+      const languages = [...(navigator.languages || []), navigator.language]
+        .filter(Boolean)
+        .map((language) => language.toLowerCase());
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      return timeZone === "Asia/Shanghai" || languages.some((language) => language === "zh-cn" || language === "zh-hans-cn");
+    }
+
+    function toRoutedDownloadUrl(url) {
+      if (!preferChinaMirror || !url.startsWith(`${githubDownloadOrigin}/`)) return url;
+      return url.replace(githubDownloadOrigin, chinaMirrorOrigin);
+    }
+
+    function setStatus(message) {
+      currentStatusMessage = message;
+      statusText.textContent = `${message}${preferChinaMirror ? " 下载按钮已切换为国内镜像。" : " 下载按钮使用 GitHub 原始地址。"}`;
+    }
+
+    function applyDownloadLinks(downloadUrl, checksumUrl) {
+      currentDownloadUrl = downloadUrl || latestDownloadUrl;
+      currentChecksumUrl = checksumUrl || latestChecksumUrl;
+      downloadButton.href = toRoutedDownloadUrl(currentDownloadUrl);
+      checksumLink.href = toRoutedDownloadUrl(currentChecksumUrl);
+      downloadButton.title = preferChinaMirror ? "国内镜像下载" : "GitHub 原始下载";
+      checksumLink.title = preferChinaMirror ? "国内镜像校验文件" : "GitHub 原始校验文件";
+      setStatus(currentStatusMessage);
+    }
+
+    async function detectDownloadRoute() {
+      const override = getDownloadRouteOverride();
+      if (override !== null) return override;
+
+      const controller = typeof AbortController === "function" ? new AbortController() : null;
+      const timeoutId = controller ? window.setTimeout(() => controller.abort(), 1800) : null;
+      try {
+        const response = await fetch("https://www.cloudflare.com/cdn-cgi/trace", {
+          cache: "no-store",
+          signal: controller ? controller.signal : undefined
+        });
+        if (response.ok) {
+          const trace = await response.text();
+          const countryMatch = trace.match(/^loc=([A-Z]{2})$/m);
+          if (countryMatch) return countryMatch[1] === "CN";
+        }
+      } catch (error) {
+        // Keep the local browser signal when IP geolocation is unavailable.
+      } finally {
+        if (timeoutId) window.clearTimeout(timeoutId);
+      }
+
+      return hasChinaLocalSignal();
+    }
+
+    async function refreshDownloadRoute() {
+      preferChinaMirror = await detectDownloadRoute();
+      applyDownloadLinks(currentDownloadUrl, currentChecksumUrl);
     }
 
     function findInstallerAsset(release) {
@@ -469,18 +545,20 @@
         dateText.textContent = formatDate(release.published_at || release.created_at);
         sizeText.textContent = asset ? formatBytes(asset.size) : "未知";
         downloadCountText.textContent = formatCount(totalDownloads);
-        downloadButton.href = asset && asset.name === "ZoteroLinkerSetup.exe" ? asset.browser_download_url : latestDownloadUrl;
-        statusText.textContent = asset ? "已获取最新发布信息和累计下载统计。" : "已获取版本信息，但未找到安装包资产。";
+        applyDownloadLinks(latestDownloadUrl, latestChecksumUrl);
+        setStatus(asset ? "已获取最新发布信息和累计下载统计。" : "已获取版本信息，但未找到安装包资产。");
       } catch (error) {
         versionText.textContent = "最新版本";
         dateText.textContent = "请查看 GitHub";
         sizeText.textContent = "约 2.8 MB";
         downloadCountText.textContent = "暂不可用";
-        downloadButton.href = latestDownloadUrl;
-        statusText.textContent = "暂时无法读取 GitHub API，下载按钮仍指向最新版安装包。";
+        applyDownloadLinks(latestDownloadUrl, latestChecksumUrl);
+        setStatus("暂时无法读取 GitHub API，下载按钮仍指向最新版安装包。");
       }
     }
 
+    applyDownloadLinks(latestDownloadUrl, latestChecksumUrl);
+    refreshDownloadRoute();
     loadRelease();
   </script>
 </body>
