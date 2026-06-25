@@ -11,9 +11,6 @@ namespace Zotero_linker
 {
     public partial class ThisAddIn
     {
-        private Word.ApplicationEvents4_WindowSelectionChangeEventHandler windowSelectionChangeHandler;
-        private DateTime lastFormattingRefresh = DateTime.MinValue;
-
         internal ZoteroLinkerService LinkerService { get; private set; }
 
         internal ZoteroLinkerOptions CurrentOptions { get; private set; }
@@ -22,44 +19,15 @@ namespace Zotero_linker
         {
             LinkerService = new ZoteroLinkerService();
             CurrentOptions = ZoteroLinkerOptions.Load();
-            windowSelectionChangeHandler = new Word.ApplicationEvents4_WindowSelectionChangeEventHandler(Application_WindowSelectionChange);
-            this.Application.WindowSelectionChange += windowSelectionChangeHandler;
         }
 
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
         {
-            if (windowSelectionChangeHandler != null)
-            {
-                this.Application.WindowSelectionChange -= windowSelectionChangeHandler;
-                windowSelectionChangeHandler = null;
-            }
         }
 
         internal void RefreshOptions()
         {
             CurrentOptions = ZoteroLinkerOptions.Load();
-        }
-
-        private void Application_WindowSelectionChange(Word.Selection selection)
-        {
-            try
-            {
-                if (selection == null || LinkerService == null || CurrentOptions == null)
-                {
-                    return;
-                }
-
-                if ((DateTime.UtcNow - lastFormattingRefresh).TotalSeconds < 30)
-                {
-                    return;
-                }
-
-                lastFormattingRefresh = DateTime.UtcNow;
-                LinkerService.EnsureCitationLinkStyles(selection.Document, CurrentOptions.CitationColor);
-            }
-            catch
-            {
-            }
         }
 
         #region VSTO 生成的代码
