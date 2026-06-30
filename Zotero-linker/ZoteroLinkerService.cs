@@ -189,9 +189,10 @@ namespace Zotero_linker
             {
                 if (IsZoteroCitationCode(SafeFieldCode(field)))
                 {
-                    field.Result.Font.ColorIndex = Word.WdColorIndex.wdAuto;
-                    field.Result.Font.Underline = Word.WdUnderline.wdUnderlineNone;
-                    result.Recolored += 1;
+                    if (ResetZoteroFieldFormatting(field.Result))
+                    {
+                        result.Recolored += 1;
+                    }
                 }
             }
 
@@ -212,8 +213,10 @@ namespace Zotero_linker
             {
                 if (IsZoteroCitationCode(SafeFieldCode(field)))
                 {
-                    ApplyCitationFormatting(field.Result, citationColor, fontSize);
-                    changed += 1;
+                    if (ApplyCitationFormatting(field.Result, citationColor, fontSize))
+                    {
+                        changed += 1;
+                    }
                 }
             }
 
@@ -268,14 +271,18 @@ namespace Zotero_linker
 
                 if (IsCitationBackBookmarkName(subAddress))
                 {
-                    ApplyBibliographyBacklinkFormatting(hyperlink.Range);
+                    if (ApplyBibliographyBacklinkFormatting(hyperlink.Range))
+                    {
+                        changed += 1;
+                    }
                 }
                 else
                 {
-                    ApplyCitationFormatting(hyperlink.Range, citationColor, fontSize);
+                    if (ApplyCitationFormatting(hyperlink.Range, citationColor, fontSize))
+                    {
+                        changed += 1;
+                    }
                 }
-
-                changed += 1;
             }
 
             return changed;
@@ -1119,28 +1126,34 @@ namespace Zotero_linker
             return FindAllRanges(sourceRange, query, matchCase).FirstOrDefault();
         }
 
-        private static void ApplyCitationFormatting(Word.Range range, Color color, float fontSize)
+        private static bool ApplyCitationFormatting(Word.Range range, Color color, float fontSize)
         {
             if (range == null)
             {
-                return;
+                return false;
             }
 
-            range.Font.Color = (Word.WdColor)ColorTranslator.ToOle(color);
-            range.Font.Size = fontSize;
-            range.Font.Underline = Word.WdUnderline.wdUnderlineNone;
+            Word.Font font = range.Font;
+            bool changed = false;
+            changed |= SetFontColorIfNeeded(font, (Word.WdColor)ColorTranslator.ToOle(color));
+            changed |= SetFontSizeIfNeeded(font, fontSize);
+            changed |= SetFontUnderlineIfNeeded(font, Word.WdUnderline.wdUnderlineNone);
+            return changed;
         }
 
-        private static void ApplyBibliographyBacklinkFormatting(Word.Range range)
+        private static bool ApplyBibliographyBacklinkFormatting(Word.Range range)
         {
             if (range == null)
             {
-                return;
+                return false;
             }
 
-            range.Font.Color = Word.WdColor.wdColorBlack;
-            range.Font.ColorIndex = Word.WdColorIndex.wdBlack;
-            range.Font.Underline = Word.WdUnderline.wdUnderlineNone;
+            Word.Font font = range.Font;
+            bool changed = false;
+            changed |= SetFontColorIfNeeded(font, Word.WdColor.wdColorBlack);
+            changed |= SetFontColorIndexIfNeeded(font, Word.WdColorIndex.wdBlack);
+            changed |= SetFontUnderlineIfNeeded(font, Word.WdUnderline.wdUnderlineNone);
+            return changed;
         }
 
         private static void EnsureZoteroHyperlinkStyles(Word.Document document, Color citationColor)
@@ -1193,11 +1206,118 @@ namespace Zotero_linker
 
             try
             {
-                style.Font.Color = (Word.WdColor)ColorTranslator.ToOle(citationColor);
-                style.Font.Underline = Word.WdUnderline.wdUnderlineNone;
+                Word.Font font = style.Font;
+                SetFontColorIfNeeded(font, (Word.WdColor)ColorTranslator.ToOle(citationColor));
+                SetFontUnderlineIfNeeded(font, Word.WdUnderline.wdUnderlineNone);
             }
             catch
             {
+            }
+        }
+
+        private static bool ResetZoteroFieldFormatting(Word.Range range)
+        {
+            if (range == null)
+            {
+                return false;
+            }
+
+            Word.Font font = range.Font;
+            bool changed = false;
+            changed |= SetFontColorIndexIfNeeded(font, Word.WdColorIndex.wdAuto);
+            changed |= SetFontUnderlineIfNeeded(font, Word.WdUnderline.wdUnderlineNone);
+            return changed;
+        }
+
+        private static bool SetFontColorIfNeeded(Word.Font font, Word.WdColor color)
+        {
+            if (font == null || IsFontColor(font, color))
+            {
+                return false;
+            }
+
+            font.Color = color;
+            return true;
+        }
+
+        private static bool SetFontColorIndexIfNeeded(Word.Font font, Word.WdColorIndex colorIndex)
+        {
+            if (font == null || IsFontColorIndex(font, colorIndex))
+            {
+                return false;
+            }
+
+            font.ColorIndex = colorIndex;
+            return true;
+        }
+
+        private static bool SetFontUnderlineIfNeeded(Word.Font font, Word.WdUnderline underline)
+        {
+            if (font == null || IsFontUnderline(font, underline))
+            {
+                return false;
+            }
+
+            font.Underline = underline;
+            return true;
+        }
+
+        private static bool SetFontSizeIfNeeded(Word.Font font, float fontSize)
+        {
+            if (font == null || IsFontSize(font, fontSize))
+            {
+                return false;
+            }
+
+            font.Size = fontSize;
+            return true;
+        }
+
+        private static bool IsFontColor(Word.Font font, Word.WdColor color)
+        {
+            try
+            {
+                return (int)font.Color == (int)color;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool IsFontColorIndex(Word.Font font, Word.WdColorIndex colorIndex)
+        {
+            try
+            {
+                return font.ColorIndex == colorIndex;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool IsFontUnderline(Word.Font font, Word.WdUnderline underline)
+        {
+            try
+            {
+                return font.Underline == underline;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool IsFontSize(Word.Font font, float fontSize)
+        {
+            try
+            {
+                return Math.Abs(font.Size - fontSize) < 0.05f;
+            }
+            catch
+            {
+                return false;
             }
         }
 
