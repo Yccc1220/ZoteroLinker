@@ -390,7 +390,7 @@
       </article>
       <article class="info-item">
         <h2>下载链接</h2>
-        <p>下载按钮会自动读取最新版安装包，并按访问地区选择 GitHub 原始地址或国内镜像。</p>
+        <p>下载按钮会自动读取最新版安装包，并按访问地区选择 GitHub 原始地址或可用国内镜像。</p>
       </article>
     </section>
 
@@ -404,7 +404,16 @@
     const latestReleaseApiUrl = "https://api.github.com/repos/Yccc1220/ZoteroLinker/releases/latest";
     const releasesApiUrl = "https://api.github.com/repos/Yccc1220/ZoteroLinker/releases?per_page=100";
     const githubDownloadOrigin = "https://github.com";
-    const chinaMirrorOrigin = "https://kami666.xyz";
+    const chinaMirrorOrigins = [
+      "https://kami666.xyz",
+      "https://deploytools.site",
+      "https://loginvipcursor.icu",
+      "https://qxfy.store",
+      "https://free.202602dashi27.top",
+      "https://free.violet.us.ci",
+      "https://violetfree.cc.cd"
+    ];
+    const mirrorProbeTimeoutMs = 2500;
     const latestDownloadUrl = `${githubDownloadOrigin}/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe`;
     const latestChecksumUrl = `${latestDownloadUrl}.sha256`;
 
@@ -417,6 +426,9 @@
     const checksumLink = document.getElementById("checksumLink");
 
     let preferChinaMirror = getDownloadRouteOverride() ?? hasChinaLocalSignal();
+    let selectedChinaMirrorOrigin = null;
+    let chinaMirrorCheckState = "idle";
+    let chinaMirrorProbePromise = null;
     let currentDownloadUrl = latestDownloadUrl;
     let currentChecksumUrl = latestChecksumUrl;
     let currentStatusMessage = "正在连接 GitHub Release。";
@@ -463,14 +475,30 @@
       return timeZone === "Asia/Shanghai" || languages.some((language) => language === "zh-cn" || language === "zh-hans-cn");
     }
 
+    function toMirrorDownloadUrl(url, mirrorOrigin) {
+      if (!url.startsWith(`${githubDownloadOrigin}/`)) return url;
+      return url.replace(githubDownloadOrigin, mirrorOrigin);
+    }
+
     function toRoutedDownloadUrl(url) {
       if (!preferChinaMirror || !url.startsWith(`${githubDownloadOrigin}/`)) return url;
-      return url.replace(githubDownloadOrigin, chinaMirrorOrigin);
+      if (!selectedChinaMirrorOrigin) return url;
+      return toMirrorDownloadUrl(url, selectedChinaMirrorOrigin);
+    }
+
+    function describeDownloadRoute() {
+      if (!preferChinaMirror) return " 下载按钮使用 GitHub 原始地址。";
+      if (selectedChinaMirrorOrigin) {
+        return ` 下载按钮已切换为国内镜像（${new URL(selectedChinaMirrorOrigin).hostname}）。`;
+      }
+      if (chinaMirrorCheckState === "checking") return " 正在检测国内镜像可用域名。";
+      if (chinaMirrorCheckState === "unavailable") return " 国内镜像暂不可用，下载按钮已回退 GitHub 原始地址。";
+      return " 下载按钮将优先使用国内镜像。";
     }
 
     function setStatus(message) {
       currentStatusMessage = message;
-      statusText.textContent = `${message}${preferChinaMirror ? " 下载按钮已切换为国内镜像。" : " 下载按钮使用 GitHub 原始地址。"}`;
+      statusText.textContent = `${message}${describeDownloadRoute()}`;
     }
 
     function applyDownloadLinks(downloadUrl, checksumUrl) {
@@ -478,9 +506,89 @@
       currentChecksumUrl = checksumUrl || latestChecksumUrl;
       downloadButton.href = toRoutedDownloadUrl(currentDownloadUrl);
       checksumLink.href = toRoutedDownloadUrl(currentChecksumUrl);
-      downloadButton.title = preferChinaMirror ? "国内镜像下载" : "GitHub 原始下载";
-      checksumLink.title = preferChinaMirror ? "国内镜像校验文件" : "GitHub 原始校验文件";
+      const routeTitle = selectedChinaMirrorOrigin ? `国内镜像：${new URL(selectedChinaMirrorOrigin).hostname}` : "GitHub 原始地址";
+      downloadButton.title = selectedChinaMirrorOrigin ? `${routeTitle} 下载` : "GitHub 原始下载";
+      checksumLink.title = selectedChinaMirrorOrigin ? `${routeTitle} 校验文件` : "GitHub 原始校验文件";
       setStatus(currentStatusMessage);
+    }
+
+    function fetchWithTimeout(url, options, timeoutMs) {
+      const controller = typeof AbortController === "function" ? new AbortController() : null;
+      const timeoutId = controller ? window.setTimeout(() => controller.abort(), timeoutMs) : null;
+      return fetch(url, {
+        ...options,
+        signal: controller ? controller.signal : undefined
+      }).finally(() => {
+        if (timeoutId) window.clearTimeout(timeoutId);
+      });
+    }
+
+    async function getMirrorProbeStatus(url) {
+      try {
+        const response = await fetchWithTimeout(url, { cache: "no-store" }, mirrorProbeTimeoutMs);
+        return response.ok ? "available" : "unavailable";
+      } catch (error) {
+        // CORS-blocked mirrors are retried later with an opaque request.
+        return "unknown";
+      }
+    }
+
+    async function canReachOpaqueMirrorUrl(url) {
+      try {
+        await fetchWithTimeout(url, { cache: "no-store", mode: "no-cors" }, mirrorProbeTimeoutMs);
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    async function findAvailableChinaMirrorOrigin() {
+      const probeUrl = currentChecksumUrl || latestChecksumUrl;
+      const opaqueCandidates = [];
+
+      for (const origin of chinaMirrorOrigins) {
+        const url = toMirrorDownloadUrl(probeUrl, origin);
+        const status = await getMirrorProbeStatus(url);
+        if (status === "available") {
+          return origin;
+        }
+        if (status === "unknown") opaqueCandidates.push({ origin, url });
+      }
+
+      for (const candidate of opaqueCandidates) {
+        if (await canReachOpaqueMirrorUrl(candidate.url)) {
+          return candidate.origin;
+        }
+      }
+
+      return null;
+    }
+
+    function beginChinaMirrorProbe() {
+      if (!preferChinaMirror) return Promise.resolve(null);
+      if (selectedChinaMirrorOrigin || chinaMirrorCheckState === "unavailable") {
+        return Promise.resolve(selectedChinaMirrorOrigin);
+      }
+      if (chinaMirrorProbePromise) return chinaMirrorProbePromise;
+
+      chinaMirrorCheckState = "checking";
+      setStatus(currentStatusMessage);
+      chinaMirrorProbePromise = findAvailableChinaMirrorOrigin().then((origin) => {
+        if (!preferChinaMirror) return null;
+        selectedChinaMirrorOrigin = origin;
+        chinaMirrorCheckState = origin ? "available" : "unavailable";
+        applyDownloadLinks(currentDownloadUrl, currentChecksumUrl);
+        return origin;
+      });
+      return chinaMirrorProbePromise;
+    }
+
+    async function handleRoutedLinkClick(event, getTargetUrl) {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      if (!preferChinaMirror || selectedChinaMirrorOrigin || chinaMirrorCheckState === "unavailable") return;
+      event.preventDefault();
+      await beginChinaMirrorProbe();
+      window.location.href = toRoutedDownloadUrl(getTargetUrl());
     }
 
     async function detectDownloadRoute() {
@@ -510,7 +618,13 @@
 
     async function refreshDownloadRoute() {
       preferChinaMirror = await detectDownloadRoute();
+      if (!preferChinaMirror) {
+        selectedChinaMirrorOrigin = null;
+        chinaMirrorCheckState = "idle";
+        chinaMirrorProbePromise = null;
+      }
       applyDownloadLinks(currentDownloadUrl, currentChecksumUrl);
+      if (preferChinaMirror) beginChinaMirrorProbe();
     }
 
     function findInstallerAsset(release) {
@@ -558,6 +672,8 @@
     }
 
     applyDownloadLinks(latestDownloadUrl, latestChecksumUrl);
+    downloadButton.addEventListener("click", (event) => handleRoutedLinkClick(event, () => currentDownloadUrl));
+    checksumLink.addEventListener("click", (event) => handleRoutedLinkClick(event, () => currentChecksumUrl));
     refreshDownloadRoute();
     loadRelease();
   </script>
