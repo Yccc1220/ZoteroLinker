@@ -4,6 +4,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$path = Join-Path "HKCU:\Software\Kingsoft\Office\wps\AddinsWL" $Name
+$path = "HKCU:\Software\Kingsoft\Office\wps\AddinsWL"
 New-Item -Path $path -Force | Out-Null
-Write-Output "WPS add-in whitelist (HKCU): $path"
+New-ItemProperty -Path $path -Name $Name -Value "" -PropertyType String -Force | Out-Null
+Write-Output "WPS add-in whitelist value (HKCU): $path\$Name"

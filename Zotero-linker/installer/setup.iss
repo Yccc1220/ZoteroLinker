@@ -44,6 +44,7 @@ Source: "..\bin\{#Config}\Zotero-linker.dll.manifest"; DestDir: "{app}\Word"; Fl
 Source: "..\bin\{#Config}\Microsoft.Office.Tools.Common.v4.0.Utilities.dll"; DestDir: "{app}\Word"; Flags: ignoreversion
 Source: "vsto-signing.cer"; DestDir: "{app}"; Flags: ignoreversion
 Source: "WriteVstoInclusions.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: "WriteWordAddinRegistration.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "WriteWpsWhitelist.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\tools\ForceClean.ps1"; DestDir: "{tmp}"; Flags: dontcopy
 Source: "..\tools\ForceClean.ps1"; DestDir: "{app}"; Flags: ignoreversion
@@ -101,14 +102,19 @@ Root: HKLM; Subkey: "Software\WOW6432Node\Microsoft\Office\ClickToRun\REGISTRY\M
 ; Let VSTO load machine-level Office add-ins.
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: string; ValueName: "EnableLocalMachineVSTO"; ValueData: "1"; Flags: uninsdeletevalue
 
-; WPS Writer add-in whitelist. Equivalent to Advanced Installer's [Manufacturer].[ProductName].
-Root: HKLM; Subkey: "Software\Kingsoft\Office\wps\AddinsWL\{#AppPublisher}.{#AppName}"; Flags: uninsdeletekey
+; WPS Writer add-in whitelist. WPS stores allowed add-ins as values under AddinsWL.
+Root: HKLM; Subkey: "Software\Kingsoft\Office\wps\AddinsWL"; ValueType: string; ValueName: "{#AddInName}"; ValueData: ""; Flags: uninsdeletevalue
+Root: HKLM; Subkey: "Software\WOW6432Node\Kingsoft\Office\wps\AddinsWL"; ValueType: string; ValueName: "{#AddInName}"; ValueData: ""; Flags: uninsdeletevalue; Check: IsWin64
+Root: HKLM; Subkey: "Software\Kingsoft\Office\wps\AddinsWL"; ValueType: string; ValueName: "{#AppPublisher}.{#AppName}"; ValueData: ""; Flags: uninsdeletevalue
+Root: HKLM; Subkey: "Software\WOW6432Node\Kingsoft\Office\wps\AddinsWL"; ValueType: string; ValueName: "{#AppPublisher}.{#AppName}"; ValueData: ""; Flags: uninsdeletevalue; Check: IsWin64
 
 [Run]
 Filename: "{sys}\certutil.exe"; Parameters: "-addstore -f ""Root"" ""{app}\vsto-signing.cer"""; Flags: runhidden
 Filename: "{sys}\certutil.exe"; Parameters: "-addstore -f ""TrustedPublisher"" ""{app}\vsto-signing.cer"""; StatusMsg: "{cm:InstallingCertificate}"; Flags: runhidden
 Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File ""{app}\WriteVstoInclusions.ps1"" -ManifestPath ""{app}\Word\{#AddInName}.vsto"" -Target HKLM"; StatusMsg: "{cm:RegisteringWord}"; Flags: runhidden
 Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File ""{app}\WriteVstoInclusions.ps1"" -ManifestPath ""{app}\Word\{#AddInName}.vsto"" -Target HKCU"; StatusMsg: "{cm:RegisteringWord}"; Flags: runhidden runasoriginaluser
+Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File ""{app}\WriteWordAddinRegistration.ps1"" -AddInName ""{#AddInName}"" -ManifestPath ""{app}\Word\{#AddInName}.vsto"" -FriendlyName ""{#AppName}"" -Description ""{#AddInDescription}"""; StatusMsg: "{cm:RegisteringWord}"; Flags: runhidden runasoriginaluser
+Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File ""{app}\WriteWpsWhitelist.ps1"" -Name ""{#AddInName}"""; StatusMsg: "{cm:RegisteringWps}"; Flags: runhidden runasoriginaluser
 Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File ""{app}\WriteWpsWhitelist.ps1"" -Name ""{#AppPublisher}.{#AppName}"""; StatusMsg: "{cm:RegisteringWps}"; Flags: runhidden runasoriginaluser
 
 [CustomMessages]

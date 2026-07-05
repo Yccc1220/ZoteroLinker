@@ -7,7 +7,7 @@ $ErrorActionPreference = "Continue"
 
 $addInName = "Zotero-linker"
 $displayName = "Zotero Linker"
-$wpsWhitelistName = "Yccc1220.Zotero Linker"
+$legacyWpsWhitelistName = "Yccc1220.Zotero Linker"
 $tokens = @("Zotero-linker", "Zotero Linker", "Zotero_linker")
 
 function Remove-KeyIfExists {
@@ -76,11 +76,23 @@ $officeAddinRoots = @(
     "HKLM:\Software\Microsoft\Office\ClickToRun\REGISTRY\MACHINE\Software\Microsoft\Office\16.0\Word\Addins\$addInName",
     "HKLM:\Software\WOW6432Node\Microsoft\Office\ClickToRun\REGISTRY\MACHINE\Software\Microsoft\Office\Word\Addins\$addInName",
     "HKLM:\Software\WOW6432Node\Microsoft\Office\ClickToRun\REGISTRY\MACHINE\Software\Microsoft\Office\16.0\Word\Addins\$addInName",
-    "HKCU:\Software\Kingsoft\Office\wps\AddinsWL\$wpsWhitelistName",
-    "HKLM:\Software\Kingsoft\Office\wps\AddinsWL\$wpsWhitelistName"
+    "HKCU:\Software\Kingsoft\Office\wps\AddinsWL\$addInName",
+    "HKLM:\Software\Kingsoft\Office\wps\AddinsWL\$addInName",
+    "HKCU:\Software\Kingsoft\Office\wps\AddinsWL\$legacyWpsWhitelistName",
+    "HKLM:\Software\Kingsoft\Office\wps\AddinsWL\$legacyWpsWhitelistName"
 )
 foreach ($path in $officeAddinRoots) {
     Remove-KeyIfExists -Path $path
+}
+
+$wpsWhitelistRoots = @(
+    "HKCU:\Software\Kingsoft\Office\wps\AddinsWL",
+    "HKLM:\Software\Kingsoft\Office\wps\AddinsWL",
+    "HKLM:\Software\WOW6432Node\Kingsoft\Office\wps\AddinsWL"
+)
+foreach ($path in $wpsWhitelistRoots) {
+    Remove-ValueIfExists -Path $path -Name $addInName
+    Remove-ValueIfExists -Path $path -Name $legacyWpsWhitelistName
 }
 
 $resiliencyRoots = @(
