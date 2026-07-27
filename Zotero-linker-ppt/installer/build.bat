@@ -58,5 +58,5 @@ if %ERRORLEVEL% neq 0 (
 
 echo ============================================
 echo  Installer built successfully!
-echo  Output: %DIST_DIR%\zoterolinkerppt-%VERSION%.exe
+echo  Output: %DIST_DIR%\ZoteroLinkerPptSetup-%VERSION%.exe
 echo ============================================

@@ -19,7 +19,7 @@ build.bat 1.0.0 Release
 Output:
 
 ```text
-dist\zoterolinkerppt-1.0.0.exe
+dist\ZoteroLinkerPptSetup-1.0.0.exe
 ```
 
 ## What the installer does

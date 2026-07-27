@@ -571,7 +571,7 @@
     </section>
 
     <footer class="footer">
-      <span>Word：zoterolinkerword.exe · PPT：zoterolinkerppt.exe</span>
+      <span>Word：ZoteroLinkerWordSetup.exe · PPT：ZoteroLinkerPptSetup.exe</span>
       <span>
         <a id="wordChecksumLink" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe.sha256">Word SHA-256</a>
         ·
@@ -828,8 +828,8 @@
 
     function installerBaseNames(product) {
       return product === "ppt"
-        ? ["zoterolinkerppt", "ZoteroLinkerPptSetup"]
-        : ["zoterolinkerword", "ZoteroLinkerSetup"];
+        ? ["ZoteroLinkerPptSetup", "zoterolinkerppt"]
+        : ["ZoteroLinkerWordSetup", "zoterolinkerword", "ZoteroLinkerSetup"];
     }
 
     function findVersionedInstallerAsset(release, product) {
