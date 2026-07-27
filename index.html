@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Zotero Linker 下载</title>
   <meta name="description" content="下载 Zotero Linker Word 和 PowerPoint 插件，查看当前版本和发布信息。">
-  <link rel="icon" href="./assets/zotero-linker.ico">
+  <link rel="icon" type="image/png" href="./assets/site-favicon.png">
   <style>
     :root {
       color-scheme: light;
@@ -469,13 +469,333 @@
         margin-top: 8px;
       }
     }
+
+    :root {
+      --bg: #eef3f8;
+      --ink: #142033;
+      --muted: #637187;
+      --line: #d5dee9;
+      --panel: #ffffff;
+      --word: #275b9e;
+      --ppt: #d64b28;
+    }
+
+    body {
+      display: block;
+      background: var(--bg);
+    }
+
+    .page {
+      width: min(1480px, calc(100% - 64px));
+      margin: 0 auto;
+      padding: 22px 0 26px;
+    }
+
+    .nav {
+      min-height: 142px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand {
+      width: 190px;
+      height: 142px;
+      overflow: visible;
+    }
+
+    .brand img {
+      display: block;
+      width: 190px;
+      height: 142px;
+      object-fit: contain;
+      transform: none;
+    }
+
+    .nav-link {
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    .hero {
+      grid-template-columns: minmax(0, 0.84fr) minmax(680px, 1.16fr);
+      gap: 48px;
+      align-items: center;
+      padding: 28px 0 30px;
+    }
+
+    .hero-copy {
+      max-width: 610px;
+    }
+
+    .eyebrow {
+      margin-bottom: 12px;
+      color: var(--word);
+      font-size: 13px;
+      letter-spacing: 0.02em;
+    }
+
+    h1 {
+      max-width: 620px;
+      font-size: 68px;
+      line-height: 1.03;
+    }
+
+    .lead {
+      max-width: 43ch;
+      margin-top: 18px;
+      font-size: 18px;
+      line-height: 1.5;
+    }
+
+    .actions {
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    .button {
+      min-height: 50px;
+      padding: 0 21px;
+      font-size: 15px;
+    }
+
+    .plugin-panels {
+      gap: 16px;
+    }
+
+    .plugin-panel {
+      min-height: 326px;
+      padding: 21px;
+      border-radius: 8px;
+      box-shadow: 0 14px 30px rgba(42, 58, 86, 0.09);
+    }
+
+    .plugin-header {
+      gap: 13px;
+    }
+
+    .plugin-icon {
+      width: 52px;
+      height: 52px;
+      flex-basis: 52px;
+    }
+
+    .plugin-title {
+      font-size: 19px;
+    }
+
+    .plugin-description {
+      min-height: 42px;
+      margin-top: 15px;
+      font-size: 13.5px;
+    }
+
+    .plugin-facts {
+      gap: 12px 22px;
+      margin-top: 16px;
+      padding-top: 15px;
+    }
+
+    .version-row strong {
+      font-size: 15px;
+    }
+
+    .plugin-status {
+      min-height: 39px;
+      padding-top: 12px;
+      font-size: 12px;
+    }
+
+    .info-grid {
+      margin-top: 0;
+      padding: 18px 0;
+    }
+
+    .info-item {
+      padding: 0 24px;
+    }
+
+    .info-item h2 {
+      margin-bottom: 6px;
+      font-size: 15px;
+    }
+
+    .info-item p {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .footer {
+      margin-top: 14px;
+      font-size: 12px;
+    }
+
+    @media (max-width: 1180px) {
+      .page {
+        width: min(1040px, calc(100% - 36px));
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        gap: 30px;
+      }
+
+      .hero-copy {
+        max-width: 760px;
+      }
+
+      h1 {
+        max-width: 760px;
+        font-size: 56px;
+      }
+
+      .plugin-panels {
+        max-width: 900px;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        width: calc(100% - 28px);
+        padding-top: 14px;
+      }
+
+      .nav {
+        min-height: 104px;
+        padding-bottom: 10px;
+      }
+
+      .brand {
+        width: 154px;
+        height: 104px;
+      }
+
+      .brand img {
+        width: 154px;
+        height: 104px;
+      }
+
+      .nav-link {
+        margin-top: 12px;
+        font-size: 12px;
+      }
+
+      .hero {
+        gap: 22px;
+        padding: 22px 0 24px;
+      }
+
+      h1 {
+        font-size: 46px;
+      }
+
+      .lead {
+        font-size: 16px;
+      }
+
+      .actions,
+      .button {
+        width: 100%;
+      }
+
+      .plugin-panels,
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .plugin-panel {
+        min-height: 0;
+      }
+
+      .info-grid {
+        padding: 0;
+      }
+    }
+
+    @media (max-width: 460px) {
+      .brand {
+        width: 136px;
+        height: 92px;
+      }
+
+      .brand img {
+        width: 136px;
+        height: 92px;
+      }
+
+      h1 {
+        font-size: 40px;
+      }
+    }
+
+    @media (min-width: 1181px) and (max-height: 760px) {
+      .page {
+        padding-top: 14px;
+        padding-bottom: 18px;
+      }
+
+      .nav {
+        min-height: 104px;
+        padding-bottom: 10px;
+      }
+
+      .brand {
+        width: 164px;
+        height: 104px;
+      }
+
+      .brand img {
+        width: 164px;
+        height: 104px;
+      }
+
+      .hero {
+        gap: 34px;
+        padding: 22px 0 22px;
+      }
+
+      h1 {
+        font-size: 54px;
+      }
+
+      .lead {
+        margin-top: 12px;
+        font-size: 16px;
+      }
+
+      .actions {
+        margin-top: 18px;
+      }
+
+      .plugin-panel {
+        min-height: 286px;
+        padding: 16px;
+      }
+
+      .plugin-description {
+        margin-top: 10px;
+      }
+
+      .plugin-facts {
+        margin-top: 10px;
+        padding-top: 10px;
+      }
+
+      .info-grid {
+        padding-top: 13px;
+        padding-bottom: 13px;
+      }
+
+      .footer {
+        margin-top: 10px;
+      }
+    }
   </style>
 </head>
 <body>
   <main class="page">
     <nav class="nav" aria-label="主导航">
       <a class="brand" href="https://github.com/Yccc1220/ZoteroLinker" target="_blank" rel="noreferrer">
-        <img src="./assets/zotero-linker-brand.png" alt="Zotero Linker" width="2048" height="2048" fetchpriority="high">
+        <img src="./assets/zotero-linker-brand-cropped.png" alt="Zotero Linker" width="1465" height="1159" fetchpriority="high">
       </a>
       <a class="nav-link" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest" target="_blank" rel="noreferrer">GitHub Release</a>
     </nav>
@@ -486,7 +806,7 @@
         <h1>Zotero 引文，连接 Word 与 PPT。</h1>
         <p class="lead">Word 双向导航正文与参考文献；PowerPoint 支持选文献、自动编号和生成参考文献页。</p>
         <div class="actions">
-          <a class="button word" id="wordDownloadButton" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe">下载 Word 插件</a>
+          <a class="button word" id="wordDownloadButton" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerWordSetup.exe">下载 Word 插件</a>
           <a class="button ppt" id="pptDownloadButton" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerPptSetup.exe">下载 PPT 插件</a>
           <a class="button secondary" href="https://github.com/Yccc1220/ZoteroLinker" target="_blank" rel="noreferrer">查看源码</a>
         </div>
@@ -497,7 +817,7 @@
           <div class="plugin-header">
             <img class="plugin-icon" src="./assets/zotero-linker.ico" alt="Word 插件图标">
             <div>
-              <p class="plugin-kicker">zoterolinkerword</p>
+              <p class="plugin-kicker">Word / WPS Writer</p>
               <h2 class="plugin-title">Word 引文导航插件</h2>
             </div>
           </div>
@@ -527,7 +847,7 @@
           <div class="plugin-header">
             <img class="plugin-icon" src="./assets/zotero-linker-ppt.png" alt="PowerPoint 插件图标">
             <div>
-              <p class="plugin-kicker">zoterolinkerppt</p>
+              <p class="plugin-kicker">PowerPoint / WPS Presentation</p>
               <h2 class="plugin-title">PowerPoint 引用插件</h2>
             </div>
           </div>
@@ -573,7 +893,7 @@
     <footer class="footer">
       <span>Word：ZoteroLinkerWordSetup.exe · PPT：ZoteroLinkerPptSetup.exe</span>
       <span>
-        <a id="wordChecksumLink" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe.sha256">Word SHA-256</a>
+        <a id="wordChecksumLink" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerWordSetup.exe.sha256">Word SHA-256</a>
         ·
         <a id="pptChecksumLink" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerPptSetup.exe.sha256">PPT SHA-256</a>
         ·
@@ -596,12 +916,11 @@
       "https://deploytools.site"
     ];
     const mirrorProbeTimeoutMs = 2500;
-    // The current release uses legacy aliases; release discovery prefers the new product names.
-    const latestWordDownloadUrl = `${githubDownloadOrigin}/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe`;
+    const latestWordDownloadUrl = `${githubDownloadOrigin}/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerWordSetup.exe`;
     const latestPptDownloadUrl = `${githubDownloadOrigin}/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerPptSetup.exe`;
     const latestWordChecksumUrl = `${latestWordDownloadUrl}.sha256`;
     const latestPptChecksumUrl = `${latestPptDownloadUrl}.sha256`;
-    // The v1.0.3 Word assets were replaced while PPT was added, resetting 62 recorded downloads.
+    // A previous Word asset replacement reset 62 downloads that GitHub no longer exposes.
     const historicalDownloadOffsets = { word: 62, ppt: 0 };
 
     const wordVersionText = document.getElementById("wordVersionText");
@@ -828,8 +1147,8 @@
 
     function installerBaseNames(product) {
       return product === "ppt"
-        ? ["ZoteroLinkerPptSetup", "zoterolinkerppt"]
-        : ["ZoteroLinkerWordSetup", "zoterolinkerword", "ZoteroLinkerSetup"];
+        ? ["ZoteroLinkerPptSetup"]
+        : ["ZoteroLinkerWordSetup", "ZoteroLinkerSetup"];
     }
 
     function findVersionedInstallerAsset(release, product) {
@@ -868,8 +1187,14 @@
 
     function countInstallerDownloads(releases, product) {
       return releases.reduce((total, release) => {
-        const asset = findInstallerAsset(release, product);
-        return total + (asset ? asset.download_count || 0 : 0);
+        const baseNames = installerBaseNames(product);
+        const releaseDownloads = (release.assets || []).reduce((sum, asset) => {
+          const isInstaller = baseNames.some((baseName) =>
+            asset.name === `${baseName}.exe` || new RegExp(`^${baseName}-\\d+\\.\\d+\\.\\d+\\.exe$`).test(asset.name)
+          );
+          return sum + (isInstaller ? asset.download_count || 0 : 0);
+        }, 0);
+        return total + releaseDownloads;
       }, 0);
     }
 
@@ -893,11 +1218,15 @@
         const pptChecksumAsset = findChecksumAsset(pptRelease, pptAsset);
         const wordDownloads = countInstallerDownloads(releaseList, "word") + historicalDownloadOffsets.word;
         const pptDownloads = countInstallerDownloads(releaseList, "ppt") + historicalDownloadOffsets.ppt;
+        const wordVersion = installerVersion(wordRelease, "word", wordRelease.tag_name || "未知");
+        const pptVersion = installerVersion(pptRelease, "ppt", pptAsset ? pptRelease.tag_name || "最新" : "待发布");
+        const wordVersionRelease = [...releaseList].reverse().find((release) => installerVersion(release, "word", null) === wordVersion) || wordRelease;
+        const pptVersionRelease = [...releaseList].reverse().find((release) => installerVersion(release, "ppt", null) === pptVersion) || pptRelease;
 
-        wordVersionText.textContent = installerVersion(wordRelease, "word", wordRelease.tag_name || "未知");
-        pptVersionText.textContent = installerVersion(pptRelease, "ppt", pptAsset ? pptRelease.tag_name || "最新" : "待发布");
-        wordDateText.textContent = formatDate(wordRelease.published_at || wordRelease.created_at);
-        pptDateText.textContent = pptAsset ? formatDate(pptRelease.published_at || pptRelease.created_at) : "待发布";
+        wordVersionText.textContent = wordVersion;
+        pptVersionText.textContent = pptVersion;
+        wordDateText.textContent = formatDate(wordVersionRelease.published_at || wordVersionRelease.created_at);
+        pptDateText.textContent = pptAsset ? formatDate(pptVersionRelease.published_at || pptVersionRelease.created_at) : "待发布";
         wordSizeText.textContent = wordAsset ? formatBytes(wordAsset.size) : "未知";
         pptSizeText.textContent = pptAsset ? formatBytes(pptAsset.size) : "待发布";
         wordDownloadCountText.textContent = formatCount(wordDownloads);
