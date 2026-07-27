@@ -166,6 +166,7 @@ jobs:
         with:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
           name: Zotero Linker ${{ needs.validate-installer.outputs.version }}
+          overwrite_files: false
           files: |
             publish-assets-flat/ZoteroLinkerSetup-${{ needs.validate-installer.outputs.version }}.exe
             publish-assets-flat/ZoteroLinkerSetup-${{ needs.validate-installer.outputs.version }}.exe.sha256

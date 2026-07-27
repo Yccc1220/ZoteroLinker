@@ -489,6 +489,8 @@
     const latestPptDownloadUrl = `${githubDownloadOrigin}/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerPptSetup.exe`;
     const latestWordChecksumUrl = `${latestWordDownloadUrl}.sha256`;
     const latestPptChecksumUrl = `${latestPptDownloadUrl}.sha256`;
+    // The v1.0.3 Word assets were replaced while PPT was added, resetting 62 recorded downloads.
+    const historicalDownloadOffsets = { word: 62, ppt: 0 };
 
     const wordVersionText = document.getElementById("wordVersionText");
     const pptVersionText = document.getElementById("pptVersionText");
@@ -769,8 +771,8 @@
         const pptAsset = findInstallerAsset(pptRelease, "ppt");
         const wordChecksumAsset = findChecksumAsset(wordRelease, wordAsset);
         const pptChecksumAsset = findChecksumAsset(pptRelease, pptAsset);
-        const wordDownloads = countInstallerDownloads(releaseList, "word");
-        const pptDownloads = countInstallerDownloads(releaseList, "ppt");
+        const wordDownloads = countInstallerDownloads(releaseList, "word") + historicalDownloadOffsets.word;
+        const pptDownloads = countInstallerDownloads(releaseList, "ppt") + historicalDownloadOffsets.ppt;
 
         wordVersionText.textContent = installerVersion(wordRelease, "word", wordRelease.tag_name || "未知");
         pptVersionText.textContent = installerVersion(pptRelease, "ppt", pptAsset ? pptRelease.tag_name || "最新" : "待发布");
