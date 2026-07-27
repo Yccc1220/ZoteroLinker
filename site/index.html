@@ -587,13 +587,13 @@
     const releasesApiUrl = "https://api.github.com/repos/Yccc1220/ZoteroLinker/releases?per_page=100";
     const githubDownloadOrigin = "https://github.com";
     const chinaMirrorOrigins = [
-      "https://kami666.xyz",
-      "https://deploytools.site",
       "https://loginvipcursor.icu",
       "https://qxfy.store",
       "https://free.202602dashi27.top",
       "https://free.violet.us.ci",
-      "https://violetfree.cc.cd"
+      "https://violetfree.cc.cd",
+      "https://kami666.xyz",
+      "https://deploytools.site"
     ];
     const mirrorProbeTimeoutMs = 2500;
     // The current release uses legacy aliases; release discovery prefers the new product names.
@@ -747,7 +747,6 @@
 
     async function findAvailableChinaMirrorOrigin() {
       const probeUrl = currentWordChecksumUrl;
-      const opaqueCandidates = [];
 
       for (const origin of chinaMirrorOrigins) {
         const url = toMirrorDownloadUrl(probeUrl, origin);
@@ -755,12 +754,9 @@
         if (status === "available") {
           return origin;
         }
-        if (status === "unknown") opaqueCandidates.push({ origin, url });
-      }
-
-      for (const candidate of opaqueCandidates) {
-        if (await canReachOpaqueMirrorUrl(candidate.url)) {
-          return candidate.origin;
+        // ponytail: accept the first reachable CORS-blocked mirror to avoid waiting on every candidate.
+        if (status === "unknown" && await canReachOpaqueMirrorUrl(url)) {
+          return origin;
         }
       }
 
