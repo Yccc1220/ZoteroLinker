@@ -19,7 +19,7 @@ build.bat 1.0.0 Release
 Output:
 
 ```text
-dist\ZoteroLinkerSetup-1.0.0.exe
+dist\zoterolinkerword-1.0.0.exe
 ```
 
 ## What the installer does

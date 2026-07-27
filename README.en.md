@@ -4,6 +4,8 @@
 
 Zotero Linker is a Windows suite for Zotero and Office. It includes a Word citation-navigation add-in and a PowerPoint citation add-in. The Word add-in links in-text citations with bibliography entries, while the PowerPoint add-in brings Zotero style selection, item selection, numbered citations, and bibliography generation into slide decks.
 
+The product family uses `zoterolinker`; the Word and PowerPoint products use `zoterolinkerword` and `zoterolinkerppt`. Existing internal VSTO identifiers remain unchanged for installed-version compatibility.
+
 ## The Gaps It Solves
 
 ### Word: citations exist, but navigation is awkward
@@ -51,8 +53,8 @@ The PowerPoint add-in requires Zotero to be running with local application commu
 Download the required installer from [GitHub Releases](https://github.com/Yccc1220/ZoteroLinker/releases/latest):
 
 ```text
-ZoteroLinkerSetup.exe       # Word / WPS Writer
-ZoteroLinkerPptSetup.exe    # PowerPoint / WPS Presentation compatibility registration
+zoterolinkerword.exe    # Word / WPS Writer
+zoterolinkerppt.exe     # PowerPoint / WPS Presentation compatibility registration
 ```
 
 Run the installer as administrator, then reopen the relevant Office or WPS application.
