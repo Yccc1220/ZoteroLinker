@@ -16,6 +16,8 @@
       --panel: #ffffff;
       --accent: #0f766e;
       --accent-ink: #ffffff;
+      --word: #2b579a;
+      --ppt: #d24726;
       --soft: #e7f4f1;
       --shadow: 0 24px 70px rgba(42, 58, 86, 0.14);
       --radius: 18px;
@@ -50,23 +52,21 @@
       align-items: center;
       justify-content: space-between;
       gap: 18px;
-      min-height: 56px;
+      min-height: 136px;
     }
 
     .brand {
       display: inline-flex;
       align-items: center;
-      gap: 12px;
       text-decoration: none;
-      font-weight: 760;
       letter-spacing: 0;
     }
 
     .brand img {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      box-shadow: 0 10px 22px rgba(15, 118, 110, 0.18);
+      width: 136px;
+      height: 136px;
+      object-fit: contain;
+      mix-blend-mode: multiply;
     }
 
     .nav-link {
@@ -85,7 +85,7 @@
       display: grid;
       grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.72fr);
       gap: 32px;
-      align-items: center;
+      align-items: start;
       padding: 74px 0 48px;
     }
 
@@ -154,25 +154,28 @@
       white-space: nowrap;
     }
 
-    .button-icon {
-      width: 24px;
-      height: 24px;
-      flex: 0 0 24px;
-      border-radius: 5px;
-    }
-
     .button:active {
       transform: translateY(1px);
     }
 
-    .button.primary {
-      background: var(--accent);
+    .button.word {
+      background: var(--word);
       color: var(--accent-ink);
-      box-shadow: 0 16px 34px rgba(15, 118, 110, 0.26);
+      box-shadow: 0 16px 34px rgba(43, 87, 154, 0.26);
     }
 
-    .button.primary:hover {
-      box-shadow: 0 20px 44px rgba(15, 118, 110, 0.32);
+    .button.word:hover {
+      box-shadow: 0 20px 44px rgba(43, 87, 154, 0.32);
+    }
+
+    .button.ppt {
+      background: var(--ppt);
+      color: var(--accent-ink);
+      box-shadow: 0 16px 34px rgba(210, 71, 38, 0.24);
+    }
+
+    .button.ppt:hover {
+      box-shadow: 0 20px 44px rgba(210, 71, 38, 0.3);
     }
 
     .button.secondary {
@@ -181,60 +184,67 @@
       color: var(--ink);
     }
 
-    .download-panel {
-      position: relative;
-      overflow: hidden;
-      border: 1px solid rgba(220, 226, 234, 0.88);
-      border-radius: var(--radius);
-      background: rgba(255, 255, 255, 0.86);
-      box-shadow: var(--shadow);
-    }
-
-    .download-panel::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(15, 118, 110, 0.14), transparent 42%);
-      pointer-events: none;
-    }
-
-    .panel-inner {
-      position: relative;
-      padding: 28px;
-    }
-
-    .app-icon {
-      width: 72px;
-      height: 72px;
-      border-radius: 16px;
-      box-shadow: 0 18px 34px rgba(15, 118, 110, 0.18);
-    }
-
-    .app-icons {
-      display: flex;
+    .plugin-panels {
+      display: grid;
       gap: 12px;
     }
 
-    .panel-title {
-      margin: 22px 0 6px;
-      font-size: 25px;
+    .plugin-panel {
+      position: relative;
+      padding: 20px;
+      border: 1px solid rgba(220, 226, 234, 0.88);
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 14px 34px rgba(42, 58, 86, 0.1);
+    }
+
+    .plugin-panel.word-panel {
+      border-left-color: var(--word);
+    }
+
+    .plugin-panel.ppt-panel {
+      border-left-color: var(--ppt);
+    }
+
+    .plugin-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .plugin-icon {
+      width: 56px;
+      height: 56px;
+      flex: 0 0 56px;
+      border-radius: 10px;
+    }
+
+    .plugin-kicker {
+      margin: 0 0 3px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .plugin-title {
+      margin: 0;
+      font-size: 21px;
       line-height: 1.2;
     }
 
-    .panel-text {
-      margin: 0;
+    .plugin-description {
+      margin: 16px 0 0;
       color: var(--muted);
-      line-height: 1.55;
+      line-height: 1.5;
+      font-size: 14px;
     }
 
-    .version-card {
+    .plugin-facts {
       display: grid;
-      gap: 12px;
-      margin-top: 24px;
-      padding: 16px;
-      border-radius: 14px;
-      background: var(--soft);
-      border: 1px solid rgba(15, 118, 110, 0.12);
+      gap: 9px;
+      margin-top: 16px;
+      padding-top: 13px;
+      border-top: 1px solid var(--line);
     }
 
     .version-row {
@@ -250,13 +260,22 @@
       font-size: 15px;
     }
 
-    .status {
-      display: inline-flex;
-      align-items: center;
-      min-height: 22px;
-      margin-top: 14px;
+    .plugin-status {
+      min-height: 38px;
+      margin: 15px 0 0;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
       color: var(--muted);
-      font-size: 13px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .word-panel .plugin-status {
+      color: var(--word);
+    }
+
+    .ppt-panel .plugin-status {
+      color: var(--ppt);
     }
 
     .info-grid {
@@ -330,14 +349,16 @@
         flex-direction: column;
       }
 
+      .brand img {
+        width: 112px;
+        height: 112px;
+      }
+
       .actions,
       .button {
         width: 100%;
       }
 
-      .panel-inner {
-        padding: 22px;
-      }
     }
   </style>
 </head>
@@ -345,8 +366,7 @@
   <main class="page">
     <nav class="nav" aria-label="主导航">
       <a class="brand" href="https://github.com/Yccc1220/ZoteroLinker" target="_blank" rel="noreferrer">
-        <img src="./assets/zotero-linker.ico" alt="Zotero Linker 图标">
-        <span>Zotero Linker</span>
+        <img src="./assets/zotero-linker-brand.png" alt="Zotero Linker">
       </a>
       <a class="nav-link" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest" target="_blank" rel="noreferrer">查看 GitHub Release</a>
     </nav>
@@ -357,54 +377,73 @@
         <h1>让 Zotero 引文进入文档，也进入演示文稿。</h1>
         <p class="lead">Word 插件建立正文引用与参考文献的双向导航；PowerPoint 插件提供 Zotero 样式选择、文献多选、编号引用和参考文献生成。</p>
         <div class="actions">
-          <a class="button primary" id="wordDownloadButton" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe">下载 Word 插件</a>
-          <a class="button secondary" id="pptDownloadButton" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerPptSetup.exe">
-            <img class="button-icon" src="./assets/zotero-linker-ppt.png" alt="">
-            下载 PPT 插件
-          </a>
+          <a class="button word" id="wordDownloadButton" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe">下载 Word 插件</a>
+          <a class="button ppt" id="pptDownloadButton" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerPptSetup.exe">下载 PPT 插件</a>
           <a class="button secondary" href="https://github.com/Yccc1220/ZoteroLinker" target="_blank" rel="noreferrer">查看源码</a>
         </div>
       </div>
 
-      <aside class="download-panel" aria-label="当前版本">
-        <div class="panel-inner">
-          <div class="app-icons">
-            <img class="app-icon" src="./assets/zotero-linker.ico" alt="Word 插件图标">
-            <img class="app-icon" src="./assets/zotero-linker-ppt.png" alt="PowerPoint 插件图标">
+      <div class="plugin-panels" aria-label="插件版本">
+        <article class="plugin-panel word-panel">
+          <div class="plugin-header">
+            <img class="plugin-icon" src="./assets/zotero-linker.ico" alt="Word 插件图标">
+            <div>
+              <p class="plugin-kicker">Microsoft Word / WPS Writer</p>
+              <h2 class="plugin-title">Word 引文导航插件</h2>
+            </div>
           </div>
-          <h2 class="panel-title">当前软件版本</h2>
-          <p class="panel-text">页面会从 GitHub Release 自动获取最新版本信息。</p>
-
-          <div class="version-card">
+          <p class="plugin-description">让正文引用与参考文献双向跳转，便于长文档阅读、审阅和维护。</p>
+          <div class="plugin-facts">
             <div class="version-row">
-              <span>Word 版本</span>
+              <span>版本</span>
               <strong id="wordVersionText">读取中</strong>
             </div>
             <div class="version-row">
-              <span>PPT 版本</span>
-              <strong id="pptVersionText">读取中</strong>
-            </div>
-            <div class="version-row">
-              <span>发布日期</span>
-              <strong id="dateText">读取中</strong>
-            </div>
-            <div class="version-row">
-              <span>Word 安装包</span>
+              <span>安装包</span>
               <strong id="wordSizeText">读取中</strong>
             </div>
             <div class="version-row">
-              <span>PPT 安装包</span>
+              <span>发布日期</span>
+              <strong id="wordDateText">读取中</strong>
+            </div>
+            <div class="version-row">
+              <span>累计下载</span>
+              <strong id="wordDownloadCountText">读取中</strong>
+            </div>
+          </div>
+          <p class="plugin-status" id="wordStatusText">正在读取 Word 发布状态。</p>
+        </article>
+
+        <article class="plugin-panel ppt-panel">
+          <div class="plugin-header">
+            <img class="plugin-icon" src="./assets/zotero-linker-ppt.png" alt="PowerPoint 插件图标">
+            <div>
+              <p class="plugin-kicker">Microsoft PowerPoint / WPS Presentation</p>
+              <h2 class="plugin-title">PowerPoint 引用插件</h2>
+            </div>
+          </div>
+          <p class="plugin-description">在幻灯片中选择 Zotero 文献，插入编号引用并生成参考文献页。</p>
+          <div class="plugin-facts">
+            <div class="version-row">
+              <span>版本</span>
+              <strong id="pptVersionText">读取中</strong>
+            </div>
+            <div class="version-row">
+              <span>安装包</span>
               <strong id="pptSizeText">读取中</strong>
             </div>
             <div class="version-row">
-              <span>累计下载次数</span>
-              <strong id="downloadCountText">读取中</strong>
+              <span>发布日期</span>
+              <strong id="pptDateText">读取中</strong>
+            </div>
+            <div class="version-row">
+              <span>累计下载</span>
+              <strong id="pptDownloadCountText">读取中</strong>
             </div>
           </div>
-
-          <span class="status" id="statusText">正在连接 GitHub Release。</span>
-        </div>
-      </aside>
+          <p class="plugin-status" id="pptStatusText">正在读取 PowerPoint 发布状态。</p>
+        </article>
+      </div>
     </section>
 
     <section class="info-grid" aria-label="软件信息">
@@ -453,11 +492,14 @@
 
     const wordVersionText = document.getElementById("wordVersionText");
     const pptVersionText = document.getElementById("pptVersionText");
-    const dateText = document.getElementById("dateText");
+    const wordDateText = document.getElementById("wordDateText");
+    const pptDateText = document.getElementById("pptDateText");
     const wordSizeText = document.getElementById("wordSizeText");
     const pptSizeText = document.getElementById("pptSizeText");
-    const downloadCountText = document.getElementById("downloadCountText");
-    const statusText = document.getElementById("statusText");
+    const wordDownloadCountText = document.getElementById("wordDownloadCountText");
+    const pptDownloadCountText = document.getElementById("pptDownloadCountText");
+    const wordStatusText = document.getElementById("wordStatusText");
+    const pptStatusText = document.getElementById("pptStatusText");
     const wordDownloadButton = document.getElementById("wordDownloadButton");
     const pptDownloadButton = document.getElementById("pptDownloadButton");
     const wordChecksumLink = document.getElementById("wordChecksumLink");
@@ -471,7 +513,8 @@
     let currentPptDownloadUrl = latestPptDownloadUrl;
     let currentWordChecksumUrl = latestWordChecksumUrl;
     let currentPptChecksumUrl = latestPptChecksumUrl;
-    let currentStatusMessage = "正在连接 GitHub Release。";
+    let currentWordStatusMessage = "正在连接 GitHub Release。";
+    let currentPptStatusMessage = "正在连接 GitHub Release。";
 
     function formatBytes(bytes) {
       if (!Number.isFinite(bytes)) return "未知";
@@ -536,9 +579,11 @@
       return " 下载按钮将优先使用国内镜像。";
     }
 
-    function setStatus(message) {
-      currentStatusMessage = message;
-      statusText.textContent = `${message}${describeDownloadRoute()}`;
+    function setStatuses(wordMessage, pptMessage) {
+      currentWordStatusMessage = wordMessage;
+      currentPptStatusMessage = pptMessage;
+      wordStatusText.textContent = `${wordMessage}${describeDownloadRoute()}`;
+      pptStatusText.textContent = `${pptMessage}${describeDownloadRoute()}`;
     }
 
     function applyDownloadLinks() {
@@ -553,7 +598,7 @@
       for (const link of [wordChecksumLink, pptChecksumLink]) {
         link.title = selectedChinaMirrorOrigin ? `${routeTitle} 校验文件` : "GitHub 原始校验文件";
       }
-      setStatus(currentStatusMessage);
+      setStatuses(currentWordStatusMessage, currentPptStatusMessage);
     }
 
     function fetchWithTimeout(url, options, timeoutMs) {
@@ -616,7 +661,7 @@
       if (chinaMirrorProbePromise) return chinaMirrorProbePromise;
 
       chinaMirrorCheckState = "checking";
-      setStatus(currentStatusMessage);
+      setStatuses(currentWordStatusMessage, currentPptStatusMessage);
       chinaMirrorProbePromise = findAvailableChinaMirrorOrigin().then((origin) => {
         if (!preferChinaMirror) return null;
         selectedChinaMirrorOrigin = origin;
@@ -683,6 +728,15 @@
       return latestAsset || versionedAsset || null;
     }
 
+    function findProductRelease(releases, product) {
+      return releases.find((release) => findInstallerAsset(release, product)) || null;
+    }
+
+    function findChecksumAsset(release, installerAsset) {
+      if (!release || !installerAsset) return null;
+      return (release.assets || []).find((asset) => asset.name === `${installerAsset.name}.sha256`) || null;
+    }
+
     function installerVersion(release, product, fallback) {
       const baseName = installerBaseName(product);
       const versionedAsset = (release.assets || []).find((asset) => new RegExp(`^${baseName}-\\d+\\.\\d+\\.\\d+\\.exe$`).test(asset.name));
@@ -706,30 +760,46 @@
         if (!latestResponse.ok) throw new Error(`GitHub latest API ${latestResponse.status}`);
         if (!releasesResponse.ok) throw new Error(`GitHub releases API ${releasesResponse.status}`);
 
-        const release = await latestResponse.json();
+        const latestRelease = await latestResponse.json();
         const releases = await releasesResponse.json();
-        const wordAsset = findInstallerAsset(release, "word");
-        const pptAsset = findInstallerAsset(release, "ppt");
-        const releaseList = Array.isArray(releases) ? releases : [release];
-        const totalDownloads = countInstallerDownloads(releaseList, "word") + countInstallerDownloads(releaseList, "ppt");
+        const releaseList = Array.isArray(releases) ? releases : [latestRelease];
+        const wordRelease = findProductRelease(releaseList, "word") || latestRelease;
+        const pptRelease = findProductRelease(releaseList, "ppt") || latestRelease;
+        const wordAsset = findInstallerAsset(wordRelease, "word");
+        const pptAsset = findInstallerAsset(pptRelease, "ppt");
+        const wordChecksumAsset = findChecksumAsset(wordRelease, wordAsset);
+        const pptChecksumAsset = findChecksumAsset(pptRelease, pptAsset);
+        const wordDownloads = countInstallerDownloads(releaseList, "word");
+        const pptDownloads = countInstallerDownloads(releaseList, "ppt");
 
-        wordVersionText.textContent = installerVersion(release, "word", release.tag_name || "未知");
-        pptVersionText.textContent = installerVersion(release, "ppt", pptAsset ? "最新" : "待发布");
-        dateText.textContent = formatDate(release.published_at || release.created_at);
+        wordVersionText.textContent = installerVersion(wordRelease, "word", wordRelease.tag_name || "未知");
+        pptVersionText.textContent = installerVersion(pptRelease, "ppt", pptAsset ? pptRelease.tag_name || "最新" : "待发布");
+        wordDateText.textContent = formatDate(wordRelease.published_at || wordRelease.created_at);
+        pptDateText.textContent = pptAsset ? formatDate(pptRelease.published_at || pptRelease.created_at) : "待发布";
         wordSizeText.textContent = wordAsset ? formatBytes(wordAsset.size) : "未知";
         pptSizeText.textContent = pptAsset ? formatBytes(pptAsset.size) : "待发布";
-        downloadCountText.textContent = formatCount(totalDownloads);
+        wordDownloadCountText.textContent = formatCount(wordDownloads);
+        pptDownloadCountText.textContent = formatCount(pptDownloads);
+        currentWordDownloadUrl = wordAsset?.browser_download_url || latestWordDownloadUrl;
+        currentPptDownloadUrl = pptAsset?.browser_download_url || latestPptDownloadUrl;
+        currentWordChecksumUrl = wordChecksumAsset?.browser_download_url || latestWordChecksumUrl;
+        currentPptChecksumUrl = pptChecksumAsset?.browser_download_url || latestPptChecksumUrl;
         applyDownloadLinks();
-        setStatus(wordAsset && pptAsset ? "已获取 Word 和 PPT 最新发布信息。" : "已获取发布信息，PPT 下载位将在安装包发布后自动启用。");
+        setStatuses(
+          wordAsset ? "已发布，可下载。" : "尚未发布安装包。",
+          pptAsset ? "已发布，可下载。" : "尚未发布安装包。"
+        );
       } catch (error) {
         wordVersionText.textContent = "最新版本";
         pptVersionText.textContent = "待发布";
-        dateText.textContent = "请查看 GitHub";
+        wordDateText.textContent = "请查看 GitHub";
+        pptDateText.textContent = "请查看 GitHub";
         wordSizeText.textContent = "约 2.8 MB";
         pptSizeText.textContent = "约 2.2 MB";
-        downloadCountText.textContent = "暂不可用";
+        wordDownloadCountText.textContent = "暂不可用";
+        pptDownloadCountText.textContent = "暂不可用";
         applyDownloadLinks();
-        setStatus("暂时无法读取 GitHub API，下载按钮仍指向最新版安装包。");
+        setStatuses("暂时无法读取 GitHub API。", "暂时无法读取 GitHub API。");
       }
     }
 
