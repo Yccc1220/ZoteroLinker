@@ -53,8 +53,8 @@ PowerPoint 插件要求 Zotero 正在运行，并允许本地应用通信。引�
 从 [GitHub Releases](https://github.com/Yccc1220/ZoteroLinker/releases/latest) 下载对应安装包：
 
 ```text
-zoterolinkerword.exe    # Word / WPS Writer
-zoterolinkerppt.exe     # PowerPoint / WPS Presentation compatibility registration
+ZoteroLinkerWordSetup.exe  # Word / WPS Writer
+ZoteroLinkerPptSetup.exe   # PowerPoint / WPS Presentation compatibility registration
 ```
 
 以管理员身份运行安装包，安装完成后重新打开对应 Office 或 WPS 应用。

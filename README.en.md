@@ -53,8 +53,8 @@ The PowerPoint add-in requires Zotero to be running with local application commu
 Download the required installer from [GitHub Releases](https://github.com/Yccc1220/ZoteroLinker/releases/latest):
 
 ```text
-zoterolinkerword.exe    # Word / WPS Writer
-zoterolinkerppt.exe     # PowerPoint / WPS Presentation compatibility registration
+ZoteroLinkerWordSetup.exe  # Word / WPS Writer
+ZoteroLinkerPptSetup.exe   # PowerPoint / WPS Presentation compatibility registration
 ```
 
 Run the installer as administrator, then reopen the relevant Office or WPS application.
