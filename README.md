@@ -4,6 +4,8 @@
 
 Zotero Linker 是一组面向 Windows 的 Zotero Office 插件，包含 Word 引文导航插件和 PowerPoint 引用插件。Word 插件让正文引用与参考文献双向跳转；PowerPoint 插件把 Zotero 的样式选择、文献选择、编号引用和参考文献列表带进幻灯片。
 
+产品族统一使用 `zoterolinker` 命名；Word 和 PowerPoint 插件分别使用 `zoterolinkerword` 与 `zoterolinkerppt`。现有 VSTO 内部标识继续保留，以兼容已安装版本。
+
 ## 解决的 Gap
 
 ### Word：引用存在，但不便导航
@@ -51,8 +53,8 @@ PowerPoint 插件要求 Zotero 正在运行，并允许本地应用通信。引�
 从 [GitHub Releases](https://github.com/Yccc1220/ZoteroLinker/releases/latest) 下载对应安装包：
 
 ```text
-ZoteroLinkerSetup.exe       # Word / WPS Writer
-ZoteroLinkerPptSetup.exe    # PowerPoint / WPS Presentation compatibility registration
+zoterolinkerword.exe    # Word / WPS Writer
+zoterolinkerppt.exe     # PowerPoint / WPS Presentation compatibility registration
 ```
 
 以管理员身份运行安装包，安装完成后重新打开对应 Office 或 WPS 应用。
