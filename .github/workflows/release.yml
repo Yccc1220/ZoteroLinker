@@ -24,6 +24,7 @@ jobs:
     name: Validate Committed Installer
     runs-on: ubuntu-latest
     outputs:
+      release_version: ${{ steps.validate.outputs.release_version }}
       version: ${{ steps.validate.outputs.version }}
       installer_path: ${{ steps.validate.outputs.installer_path }}
       checksum_path: ${{ steps.validate.outputs.checksum_path }}
@@ -42,7 +43,7 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "$RELEASE_SOURCE" =~ v?([0-9]+\.[0-9]+\.[0-9]+) ]]; then
-            version="${BASH_REMATCH[1]}"
+            release_version="${BASH_REMATCH[1]}"
           else
             echo "Release source does not contain a semantic version: $RELEASE_SOURCE" >&2
             exit 1
@@ -66,11 +67,17 @@ jobs:
             echo "Validated $installer ($actual)"
           }
 
-          installer="release/zoterolinkerword-${version}.exe"
+          shopt -s nullglob
+          word_installers=(release/zoterolinkerword-[0-9]*.[0-9]*.[0-9]*.exe)
+          if (( ${#word_installers[@]} == 0 )); then
+            echo "No versioned Word installer found." >&2
+            exit 1
+          fi
+          installer="$(printf '%s\n' "${word_installers[@]}" | sort -V | tail -n1)"
           checksum="${installer}.sha256"
+          word_version="$(basename "$installer" | sed -E 's/^zoterolinkerword-([0-9]+\.[0-9]+\.[0-9]+)\.exe$/\1/')"
           validate_checksum "$installer"
 
-          shopt -s nullglob
           ppt_installers=(release/zoterolinkerppt-[0-9]*.[0-9]*.[0-9]*.exe)
           if (( ${#ppt_installers[@]} == 0 )); then
             echo "No versioned PowerPoint installer found." >&2
@@ -81,7 +88,8 @@ jobs:
           ppt_version="$(basename "$ppt_installer" | sed -E 's/^zoterolinkerppt-([0-9]+\.[0-9]+\.[0-9]+)\.exe$/\1/')"
           validate_checksum "$ppt_installer"
 
-          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "release_version=$release_version" >> "$GITHUB_OUTPUT"
+          echo "version=$word_version" >> "$GITHUB_OUTPUT"
           echo "installer_path=$installer" >> "$GITHUB_OUTPUT"
           echo "checksum_path=$checksum" >> "$GITHUB_OUTPUT"
           echo "ppt_version=$ppt_version" >> "$GITHUB_OUTPUT"
@@ -143,7 +151,7 @@ jobs:
         shell: bash
         env:
           RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
-          RELEASE_VERSION: ${{ needs.validate-installer.outputs.version }}
+          RELEASE_VERSION: ${{ needs.validate-installer.outputs.release_version }}
         run: |
           set -euo pipefail
           notes_file="release-notes/${RELEASE_TAG}.md"
@@ -165,7 +173,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
-          name: Zotero Linker ${{ needs.validate-installer.outputs.version }}
+          name: Zotero Linker ${{ needs.validate-installer.outputs.release_version }}
           overwrite_files: false
           files: |
             publish-assets-flat/zoterolinkerword-${{ needs.validate-installer.outputs.version }}.exe
