@@ -69,7 +69,7 @@ Run the installer as administrator, then reopen the relevant Office or WPS appli
 
 ## Repository Contents
 
-- `Zotero-linker/`: Word VSTO add-in source and installer.
+- `Zotero-linker-word/`: Word VSTO add-in source and installer.
 - `Zotero-linker-ppt/`: PowerPoint VSTO add-in source and installer.
 - `release/`: Word and PowerPoint installers with SHA-256 checksums.
 - `.github/workflows/release.yml`: GitHub Release workflow.
