@@ -69,7 +69,7 @@ ZoteroLinkerPptSetup.exe   # PowerPoint / WPS Presentation compatibility registr
 
 ## 仓库内容
 
-- `Zotero-linker/`：Word VSTO 插件源码和安装器。
+- `Zotero-linker-word/`：Word VSTO 插件源码和安装器。
 - `Zotero-linker-ppt/`：PowerPoint VSTO 插件源码和安装器。
 - `release/`：Word、PowerPoint 安装包及 SHA-256 校验文件。
 - `.github/workflows/release.yml`：GitHub Release 发布流程。
