@@ -2,74 +2,74 @@
 
 [中文](README.md) | English
 
-Zotero Linker is a Windows Word add-in that improves citation navigation in Zotero-based documents. It is designed for academic writing, thesis preparation, literature reviews, grant proposals, and technical reports with many references. The add-in has been adapted for Microsoft Office Word and WPS Word/Writer on Windows.
+Zotero Linker is a Windows suite for Zotero and Office. It includes a Word citation-navigation add-in and a PowerPoint citation add-in. The Word add-in links in-text citations with bibliography entries, while the PowerPoint add-in brings Zotero style selection, item selection, numbered citations, and bibliography generation into slide decks.
 
-## The Gap It Solves
+## The Gaps It Solves
 
-Zotero is excellent at managing references, inserting citations, and generating bibliographies. However, in Word documents, Zotero citations are not always convenient to navigate. Readers often need to jump from an in-text citation such as `[1]`, `[2-4]`, or `[3, 5, 8]` to the corresponding bibliography entry, and sometimes back from a reference entry to where it is cited in the main text.
+### Word: citations exist, but navigation is awkward
 
-In long documents, manually scrolling between the main text and the bibliography becomes slow and distracting. The more references a document contains, the more this affects writing, reviewing, and editing efficiency.
+Zotero can insert citations and generate bibliographies in Word, but citations such as `[1]`, `[2-4]`, or `[3, 5, 8]` do not always provide convenient two-way navigation to their bibliography entries. In long documents, repeated scrolling and searching slows writing, reading, and review.
 
-Zotero Linker does not replace Zotero. Instead, it fills this navigation and formatting gap by turning Zotero-generated Word documents into documents that are easier to read, review, and maintain.
+The Word add-in preserves Zotero fields, creates links in both directions, and provides formatting repair and link cleanup.
 
-## Key Features
+### PowerPoint: no equivalent Zotero citation workflow
 
-- Link in-text citations to bibliography entries.
-- Link bibliography entries back to the corresponding in-text citation.
-- Support common numeric citation formats such as `[1]`, `[1,3,5]`, and `[2-4]`.
-- Handle compressed numeric citations by using Zotero field information.
-- Repair citation formatting, including color, underline, and font size.
-- Remove generated links and bookmarks while preserving original Zotero citation fields.
-- Customize citation color and font size.
-- Show operation status directly in the Word ribbon, including linked items, backlinks, hidden items, and failed matches.
+Zotero's official Office integration is centered on Word. PowerPoint does not provide the same style-selection, item-search, multi-citation, automatic-numbering, and bibliography-refresh workflow. Users often type `[1]` manually and copy bibliography text, which makes numbering and style consistency fragile when references change.
+
+The PowerPoint add-in uses Zotero's local citing protocol to open Zotero's document preferences and item picker, insert single or multiple citations into slides, and generate or refresh a bibliography slide. It fills the integration gap between Zotero and presentations without replacing Zotero.
+
+## Word Add-in
+
+- Link in-text citations to bibliography entries and back again.
+- Support numeric formats such as `[1]`, `[1,3,5]`, and `[2-4]`.
+- Use Zotero field data to handle visible and hidden items in compressed citations.
+- Repair citation color, underline, and font size.
+- Remove generated links and bookmarks while preserving Zotero fields.
+- Support Microsoft Office Word and WPS Word/Writer.
+
+## PowerPoint Add-in
+
+- Open Zotero document preferences on first use to select a CSL style.
+- Open Zotero's item picker with single- and multi-select support.
+- Insert numbered citations such as `[1]` or `[1–4]` into the active slide.
+- Create or update a bibliography on a `References` slide.
+- Support `Document Preferences` and `Refresh` commands.
+- Persist Zotero document and field metadata inside the presentation for later refreshes.
 
 ## Compatibility
 
-- Operating system: Windows
-- Supported editors: Microsoft Office Word, WPS Word/Writer
-- Reference manager: Zotero
-- Recommended document type: Word documents that still contain Zotero citation fields and bibliography fields
+| Add-in | Supported environment |
+| --- | --- |
+| Word | Windows, Microsoft Office Word, WPS Word/Writer, Zotero |
+| PowerPoint | Windows, Microsoft Office PowerPoint, Zotero |
+| WPS Presentation | The installer writes the WPS Presentation (`WPP`) add-in whitelist; actual loading depends on the VSTO compatibility of the installed WPS version |
 
-Note: If Zotero citations have been converted to plain text, the add-in may not be able to read the full Zotero field data, and some advanced features may not work.
+The PowerPoint add-in requires Zotero to be running with local application communication enabled. Citations and bibliography entries are stored as PowerPoint text shapes rather than Word fields.
 
 ## Installation
 
-Download the installer from GitHub Releases:
+Download the required installer from [GitHub Releases](https://github.com/Yccc1220/ZoteroLinker/releases/latest):
 
 ```text
-ZoteroLinkerSetup-1.0.0.exe
+ZoteroLinkerSetup.exe       # Word / WPS Writer
+ZoteroLinkerPptSetup.exe    # PowerPoint / WPS Presentation compatibility registration
 ```
 
-Run the installer as administrator, then reopen Microsoft Word or WPS Word/Writer.
+Run the installer as administrator, then reopen the relevant Office or WPS application.
 
-## Basic Usage
+## PowerPoint Usage
 
-1. Install the add-in and open Microsoft Word or WPS Word/Writer.
-2. Open a document that contains Zotero citations and a Zotero bibliography.
-3. Find the `Zotero Linker` tab in the ribbon.
-4. Click `Link Citations` to create links between in-text citations and bibliography entries.
-5. Use `Ctrl + Click` to navigate between citations and references.
-6. Use `Remove Links` to remove generated links when needed.
-7. Use `Repair Formatting` to restore citation color, underline, and font size.
-8. Use `Options` to customize citation color and font size.
-
-## Why It Matters
-
-For short documents, manually checking references may be acceptable. For long papers, theses, and reviews with dozens or hundreds of references, citation navigation becomes a real productivity issue. Zotero Linker helps authors, reviewers, supervisors, and collaborators move between citations and references more efficiently.
-
-In short:
-
-> Zotero creates correct citations. Zotero Linker makes those citations easier to navigate, review, and maintain in Word documents.
+1. Start Zotero and open a PowerPoint presentation.
+2. Select `Insert Citation` on the `Zotero Linker` ribbon tab.
+3. Choose a citation style on first use, then select one or more items in Zotero.
+4. Select `Add Bibliography` to create the references slide.
+5. Select `Refresh` after citations or document preferences change.
 
 ## Repository Contents
 
-- `release/`: built Windows installer and SHA-256 checksum
-- `Zotero-linker/`: VSTO add-in source code
-- `README.md`: Chinese documentation
-- `README.en.md`: English documentation
-
-## Notes
-
-This add-in is mainly intended for Windows desktop writing workflows where Zotero is used together with Word or WPS Word/Writer.
-
+- `Zotero-linker/`: Word VSTO add-in source and installer.
+- `Zotero-linker-ppt/`: PowerPoint VSTO add-in source and installer.
+- `release/`: Word and PowerPoint installers with SHA-256 checksums.
+- `.github/workflows/release.yml`: GitHub Release workflow.
+- `site/`: GitHub Pages download page.
 

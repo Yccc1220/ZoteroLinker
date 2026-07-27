@@ -2,70 +2,73 @@
 
 中文 | [English](README.en.md)
 
-Zotero Linker 是一个面向 Windows 的 Word 引文导航插件，用于增强 Zotero 在长文档写作、阅读和审阅中的使用体验。插件已针对 Microsoft Office Word 和 WPS Word/Writer 做了适配，适合论文、综述、学位论文、基金申请书和技术报告等包含大量参考文献的文档。
+Zotero Linker 是一组面向 Windows 的 Zotero Office 插件，包含 Word 引文导航插件和 PowerPoint 引用插件。Word 插件让正文引用与参考文献双向跳转；PowerPoint 插件把 Zotero 的样式选择、文献选择、编号引用和参考文献列表带进幻灯片。
 
 ## 解决的 Gap
 
-Zotero 可以很好地完成文献管理、正文引用插入和参考文献列表生成，但在 Word 文档中仍然存在一个常见痛点：正文中的引用编号和文末参考文献之间缺少便捷的导航关系。
+### Word：引用存在，但不便导航
 
-在长文档中，用户经常需要从正文中的 `[1]`、`[2-4]` 或 `[3, 5, 8]` 跳转到对应参考文献，或者从参考文献列表返回正文中引用它的位置。传统方式通常需要手动滚动和查找，文献数量越多，阅读、修改和审阅效率越低。
+Zotero 可以在 Word 中插入引用并生成参考文献，但正文中的 `[1]`、`[2-4]` 或 `[3, 5, 8]` 与文末条目之间通常缺少便捷的双向导航。长文档需要频繁滚动和查找，影响写作、阅读和审阅效率。
 
-Zotero Linker 的目标不是替代 Zotero，而是补齐 Zotero 生成的 Word 文档在引用导航和格式维护方面的不足，让文档从“引用格式正确”进一步变成“可跳转、可审阅、可维护”。
+Word 插件保留 Zotero 原有引用域，为正文引用和参考文献条目建立双向链接，并提供格式修复和链接清理功能。
 
-## 主要功能
+### PowerPoint：缺少 Zotero 原生引用工作流
 
-- 正文引用跳转到参考文献：为 Zotero 生成的正文引用添加内部链接，支持从正文快速定位到文末参考文献条目。
-- 参考文献返回正文引用：为参考文献编号添加反向链接，支持从文末参考文献跳回正文中的引用位置。
-- 支持多文献和连续引用：支持 `[1]`、`[1,3,5]`、`[2-4]` 等常见数字引用形式。
-- 支持压缩引用处理：对 `[2-4]` 这类连续引用，插件会结合 Zotero 域信息处理可见和隐藏的引用项。
-- 修复引用格式：帮助恢复链接后的引用颜色、下划线和字号，减少 Word 已访问超链接样式造成的格式变化。
-- 删除插件链接：可以删除插件生成的链接和书签，同时保留 Zotero 原有引用域。
-- 自定义显示选项：支持设置引用颜色和字号，便于适配不同论文模板和审阅习惯。
-- 状态反馈：在 Word 功能区显示链接数量、反向链接数量、隐藏项和失败匹配等结果。
+Zotero 官方 Office 集成主要面向 Word，PowerPoint 中没有同等的样式选择、文献检索、多选引用、自动编号和参考文献刷新流程。用户通常只能手工输入 `[1]`、维护编号并复制参考文献；增删文献后容易出现编号错位、样式不一致和列表遗漏。
 
-## 适用环境
+PowerPoint 插件通过 Zotero 本地引用协议打开 Zotero 的文档首选项和文献选择窗口，将单篇或多篇引用写入幻灯片，并生成和刷新参考文献页。它不替代 Zotero，而是补齐 Zotero 与演示文稿之间的集成空白。
 
-- 操作系统：Windows
-- 支持场景：Microsoft Office Word、WPS Word/Writer
-- 文献管理器：Zotero
-- 文档要求：建议保留 Zotero 插入的引用域和参考文献域
+## Word 插件
 
-注意：如果文档中的 Zotero 引用已经被转换为纯文本，插件将无法读取完整的 Zotero 域信息，部分高级功能可能不可用。
+- 正文引用跳转到参考文献，并支持从参考文献返回正文引用。
+- 支持 `[1]`、`[1,3,5]`、`[2-4]` 等数字引用形式。
+- 结合 Zotero 域信息处理压缩引用中的可见和隐藏项目。
+- 修复引用颜色、下划线和字号。
+- 删除插件生成的链接和书签，同时保留 Zotero 引用域。
+- 支持 Microsoft Office Word 和 WPS Word/Writer。
+
+## PowerPoint 插件
+
+- 首次使用时打开 Zotero 文档首选项，选择 CSL 引用样式。
+- 调用 Zotero 文献选择窗口，支持单选和多选引用。
+- 在当前幻灯片插入编号引用，例如 `[1]` 或 `[1–4]`。
+- 新建或更新 `References` 幻灯片中的参考文献列表。
+- 支持 `Document Preferences` 和 `Refresh`。
+- 在演示文稿中保存 Zotero 文档和引用字段元数据，便于后续刷新。
+
+## 兼容性
+
+| 插件 | 支持环境 |
+| --- | --- |
+| Word | Windows、Microsoft Office Word、WPS Word/Writer、Zotero |
+| PowerPoint | Windows、Microsoft Office PowerPoint、Zotero |
+| WPS 演示 | 安装器会写入 WPS Presentation (`WPP`) 加载项白名单；实际加载取决于所用 WPS 版本对 VSTO 的兼容性 |
+
+PowerPoint 插件要求 Zotero 正在运行，并允许本地应用通信。引用和参考文献以 PowerPoint 文本形状保存，而不是 Word 域。
 
 ## 安装
 
-从 GitHub Releases 下载：
+从 [GitHub Releases](https://github.com/Yccc1220/ZoteroLinker/releases/latest) 下载对应安装包：
 
 ```text
-ZoteroLinkerSetup-1.0.0.exe
+ZoteroLinkerSetup.exe       # Word / WPS Writer
+ZoteroLinkerPptSetup.exe    # PowerPoint / WPS Presentation compatibility registration
 ```
 
-以管理员身份运行安装包。安装完成后，重新打开 Word 或 WPS Word/Writer。
+以管理员身份运行安装包，安装完成后重新打开对应 Office 或 WPS 应用。
 
-## 基本使用
+## PowerPoint 基本使用
 
-1. 安装插件并打开 Word 或 WPS Word/Writer。
-2. 打开包含 Zotero 引用和参考文献的文档。
-3. 在功能区中找到 `Zotero Linker`。
-4. 点击 `Link Citations` 生成正文引用与参考文献之间的链接。
-5. 使用 `Ctrl + 单击` 在正文引用和参考文献之间跳转。
-6. 如需清理链接，可点击 `Remove Links`。
-7. 如需恢复颜色、字号和格式，可点击 `Repair Formatting`。
-8. 如需调整颜色或字号，可进入 `Options` 设置。
-
-## 为什么需要它
-
-对于短文档，手动查找参考文献尚可接受。但在包含几十到几百条参考文献的长文档中，频繁来回滚动会明显打断阅读和修改节奏。Zotero Linker 通过自动建立双向链接，使引用检查、文献核对、导师审阅和论文修改更加高效。
-
-简单来说：
-
-> Zotero 负责生成正确的引用内容，Zotero Linker 负责让这些引用在 Word 文档中更好查、更好跳、更好维护。
+1. 启动 Zotero，然后打开 PowerPoint 演示文稿。
+2. 在 `Zotero Linker` 功能区点击 `Insert Citation`。
+3. 首次使用时选择引用样式；随后在 Zotero 窗口中选择一篇或多篇文献。
+4. 点击 `Add Bibliography` 生成参考文献页。
+5. 文献或样式发生变化后，点击 `Refresh` 更新引用和参考文献。
 
 ## 仓库内容
 
-- `Zotero-linker/`：VSTO 插件源码
-- `Zotero-linker/installer/`：Inno Setup 安装器脚本
-- `release/`：已构建的 Windows 安装包和 SHA-256 校验文件
-- `.github/workflows/release.yml`：GitHub Actions 发布流程
-- `README.md`：中文说明
-- `README.en.md`：英文说明
+- `Zotero-linker/`：Word VSTO 插件源码和安装器。
+- `Zotero-linker-ppt/`：PowerPoint VSTO 插件源码和安装器。
+- `release/`：Word、PowerPoint 安装包及 SHA-256 校验文件。
+- `.github/workflows/release.yml`：GitHub Release 发布流程。
+- `site/`：GitHub Pages 下载页面。

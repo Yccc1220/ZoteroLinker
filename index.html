@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Zotero Linker 下载</title>
-  <meta name="description" content="下载 Zotero Linker 最新版本，查看当前版本号和发布信息。">
+  <meta name="description" content="下载 Zotero Linker Word 和 PowerPoint 插件，查看当前版本和发布信息。">
   <link rel="icon" href="./assets/zotero-linker.ico">
   <style>
     :root {
@@ -142,6 +142,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      gap: 9px;
       min-height: 50px;
       padding: 0 20px;
       border-radius: 999px;
@@ -151,6 +152,13 @@
       text-decoration: none;
       transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
       white-space: nowrap;
+    }
+
+    .button-icon {
+      width: 24px;
+      height: 24px;
+      flex: 0 0 24px;
+      border-radius: 5px;
     }
 
     .button:active {
@@ -200,6 +208,11 @@
       height: 72px;
       border-radius: 16px;
       box-shadow: 0 18px 34px rgba(15, 118, 110, 0.18);
+    }
+
+    .app-icons {
+      display: flex;
+      gap: 12px;
     }
 
     .panel-title {
@@ -340,33 +353,48 @@
 
     <section class="hero">
       <div class="hero-copy">
-        <p class="eyebrow">Windows Word / WPS Writer 插件</p>
-        <h1>让 Zotero 引文在长文档里更好跳转。</h1>
-        <p class="lead">下载最新版本的 Zotero Linker，为 Zotero 生成的正文引用和参考文献建立双向链接，并保留可修复的引用格式。</p>
+        <p class="eyebrow">Windows Word / PowerPoint Zotero 插件</p>
+        <h1>让 Zotero 引文进入文档，也进入演示文稿。</h1>
+        <p class="lead">Word 插件建立正文引用与参考文献的双向导航；PowerPoint 插件提供 Zotero 样式选择、文献多选、编号引用和参考文献生成。</p>
         <div class="actions">
-          <a class="button primary" id="downloadButton" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe">下载最新版</a>
+          <a class="button primary" id="wordDownloadButton" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe">下载 Word 插件</a>
+          <a class="button secondary" id="pptDownloadButton" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerPptSetup.exe">
+            <img class="button-icon" src="./assets/zotero-linker-ppt.png" alt="">
+            下载 PPT 插件
+          </a>
           <a class="button secondary" href="https://github.com/Yccc1220/ZoteroLinker" target="_blank" rel="noreferrer">查看源码</a>
         </div>
       </div>
 
       <aside class="download-panel" aria-label="当前版本">
         <div class="panel-inner">
-          <img class="app-icon" src="./assets/zotero-linker.ico" alt="">
+          <div class="app-icons">
+            <img class="app-icon" src="./assets/zotero-linker.ico" alt="Word 插件图标">
+            <img class="app-icon" src="./assets/zotero-linker-ppt.png" alt="PowerPoint 插件图标">
+          </div>
           <h2 class="panel-title">当前软件版本</h2>
           <p class="panel-text">页面会从 GitHub Release 自动获取最新版本信息。</p>
 
           <div class="version-card">
             <div class="version-row">
-              <span>版本号</span>
-              <strong id="versionText">读取中</strong>
+              <span>Word 版本</span>
+              <strong id="wordVersionText">读取中</strong>
+            </div>
+            <div class="version-row">
+              <span>PPT 版本</span>
+              <strong id="pptVersionText">读取中</strong>
             </div>
             <div class="version-row">
               <span>发布日期</span>
               <strong id="dateText">读取中</strong>
             </div>
             <div class="version-row">
-              <span>安装包大小</span>
-              <strong id="sizeText">读取中</strong>
+              <span>Word 安装包</span>
+              <strong id="wordSizeText">读取中</strong>
+            </div>
+            <div class="version-row">
+              <span>PPT 安装包</span>
+              <strong id="pptSizeText">读取中</strong>
             </div>
             <div class="version-row">
               <span>累计下载次数</span>
@@ -382,11 +410,11 @@
     <section class="info-grid" aria-label="软件信息">
       <article class="info-item">
         <h2>适用环境</h2>
-        <p>Windows 桌面端，支持 Microsoft Office Word，并针对 WPS Word/Writer 做了注册表适配。</p>
+        <p>Windows 桌面端，支持 Microsoft Office Word 和 PowerPoint，并为 WPS Writer / Presentation 写入兼容注册项。</p>
       </article>
       <article class="info-item">
         <h2>核心能力</h2>
-        <p>正文引用跳转参考文献，参考文献返回正文引用，支持多文献和连续数字引用。</p>
+        <p>Word 提供引用双向导航；PowerPoint 提供 Zotero 文献选择、自动编号、参考文献生成和刷新。</p>
       </article>
       <article class="info-item">
         <h2>下载链接</h2>
@@ -395,8 +423,12 @@
     </section>
 
     <footer class="footer">
-      <span>安装包文件名：ZoteroLinkerSetup.exe</span>
-      <a id="checksumLink" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe.sha256">下载 SHA-256 校验文件</a>
+      <span>Word：ZoteroLinkerSetup.exe · PPT：ZoteroLinkerPptSetup.exe</span>
+      <span>
+        <a id="wordChecksumLink" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe.sha256">Word SHA-256</a>
+        ·
+        <a id="pptChecksumLink" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerPptSetup.exe.sha256">PPT SHA-256</a>
+      </span>
     </footer>
   </main>
 
@@ -414,23 +446,31 @@
       "https://violetfree.cc.cd"
     ];
     const mirrorProbeTimeoutMs = 2500;
-    const latestDownloadUrl = `${githubDownloadOrigin}/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe`;
-    const latestChecksumUrl = `${latestDownloadUrl}.sha256`;
+    const latestWordDownloadUrl = `${githubDownloadOrigin}/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerSetup.exe`;
+    const latestPptDownloadUrl = `${githubDownloadOrigin}/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerPptSetup.exe`;
+    const latestWordChecksumUrl = `${latestWordDownloadUrl}.sha256`;
+    const latestPptChecksumUrl = `${latestPptDownloadUrl}.sha256`;
 
-    const versionText = document.getElementById("versionText");
+    const wordVersionText = document.getElementById("wordVersionText");
+    const pptVersionText = document.getElementById("pptVersionText");
     const dateText = document.getElementById("dateText");
-    const sizeText = document.getElementById("sizeText");
+    const wordSizeText = document.getElementById("wordSizeText");
+    const pptSizeText = document.getElementById("pptSizeText");
     const downloadCountText = document.getElementById("downloadCountText");
     const statusText = document.getElementById("statusText");
-    const downloadButton = document.getElementById("downloadButton");
-    const checksumLink = document.getElementById("checksumLink");
+    const wordDownloadButton = document.getElementById("wordDownloadButton");
+    const pptDownloadButton = document.getElementById("pptDownloadButton");
+    const wordChecksumLink = document.getElementById("wordChecksumLink");
+    const pptChecksumLink = document.getElementById("pptChecksumLink");
 
     let preferChinaMirror = getDownloadRouteOverride() ?? hasChinaLocalSignal();
     let selectedChinaMirrorOrigin = null;
     let chinaMirrorCheckState = "idle";
     let chinaMirrorProbePromise = null;
-    let currentDownloadUrl = latestDownloadUrl;
-    let currentChecksumUrl = latestChecksumUrl;
+    let currentWordDownloadUrl = latestWordDownloadUrl;
+    let currentPptDownloadUrl = latestPptDownloadUrl;
+    let currentWordChecksumUrl = latestWordChecksumUrl;
+    let currentPptChecksumUrl = latestPptChecksumUrl;
     let currentStatusMessage = "正在连接 GitHub Release。";
 
     function formatBytes(bytes) {
@@ -501,14 +541,18 @@
       statusText.textContent = `${message}${describeDownloadRoute()}`;
     }
 
-    function applyDownloadLinks(downloadUrl, checksumUrl) {
-      currentDownloadUrl = downloadUrl || latestDownloadUrl;
-      currentChecksumUrl = checksumUrl || latestChecksumUrl;
-      downloadButton.href = toRoutedDownloadUrl(currentDownloadUrl);
-      checksumLink.href = toRoutedDownloadUrl(currentChecksumUrl);
+    function applyDownloadLinks() {
+      wordDownloadButton.href = toRoutedDownloadUrl(currentWordDownloadUrl);
+      pptDownloadButton.href = toRoutedDownloadUrl(currentPptDownloadUrl);
+      wordChecksumLink.href = toRoutedDownloadUrl(currentWordChecksumUrl);
+      pptChecksumLink.href = toRoutedDownloadUrl(currentPptChecksumUrl);
       const routeTitle = selectedChinaMirrorOrigin ? `国内镜像：${new URL(selectedChinaMirrorOrigin).hostname}` : "GitHub 原始地址";
-      downloadButton.title = selectedChinaMirrorOrigin ? `${routeTitle} 下载` : "GitHub 原始下载";
-      checksumLink.title = selectedChinaMirrorOrigin ? `${routeTitle} 校验文件` : "GitHub 原始校验文件";
+      for (const link of [wordDownloadButton, pptDownloadButton]) {
+        link.title = selectedChinaMirrorOrigin ? `${routeTitle} 下载` : "GitHub 原始下载";
+      }
+      for (const link of [wordChecksumLink, pptChecksumLink]) {
+        link.title = selectedChinaMirrorOrigin ? `${routeTitle} 校验文件` : "GitHub 原始校验文件";
+      }
       setStatus(currentStatusMessage);
     }
 
@@ -543,7 +587,7 @@
     }
 
     async function findAvailableChinaMirrorOrigin() {
-      const probeUrl = currentChecksumUrl || latestChecksumUrl;
+      const probeUrl = currentWordChecksumUrl;
       const opaqueCandidates = [];
 
       for (const origin of chinaMirrorOrigins) {
@@ -577,7 +621,7 @@
         if (!preferChinaMirror) return null;
         selectedChinaMirrorOrigin = origin;
         chinaMirrorCheckState = origin ? "available" : "unavailable";
-        applyDownloadLinks(currentDownloadUrl, currentChecksumUrl);
+        applyDownloadLinks();
         return origin;
       });
       return chinaMirrorProbePromise;
@@ -623,20 +667,32 @@
         chinaMirrorCheckState = "idle";
         chinaMirrorProbePromise = null;
       }
-      applyDownloadLinks(currentDownloadUrl, currentChecksumUrl);
+      applyDownloadLinks();
       if (preferChinaMirror) beginChinaMirrorProbe();
     }
 
-    function findInstallerAsset(release) {
+    function installerBaseName(product) {
+      return product === "ppt" ? "ZoteroLinkerPptSetup" : "ZoteroLinkerSetup";
+    }
+
+    function findInstallerAsset(release, product) {
       const assets = release.assets || [];
-      const latestAsset = assets.find((asset) => asset.name === "ZoteroLinkerSetup.exe");
-      const versionedAsset = assets.find((asset) => /^ZoteroLinkerSetup-\d+\.\d+\.\d+\.exe$/.test(asset.name));
+      const baseName = installerBaseName(product);
+      const latestAsset = assets.find((asset) => asset.name === `${baseName}.exe`);
+      const versionedAsset = assets.find((asset) => new RegExp(`^${baseName}-\\d+\\.\\d+\\.\\d+\\.exe$`).test(asset.name));
       return latestAsset || versionedAsset || null;
     }
 
-    function countInstallerDownloads(releases) {
+    function installerVersion(release, product, fallback) {
+      const baseName = installerBaseName(product);
+      const versionedAsset = (release.assets || []).find((asset) => new RegExp(`^${baseName}-\\d+\\.\\d+\\.\\d+\\.exe$`).test(asset.name));
+      const match = versionedAsset && versionedAsset.name.match(/-(\d+\.\d+\.\d+)\.exe$/);
+      return match ? match[1] : fallback;
+    }
+
+    function countInstallerDownloads(releases, product) {
       return releases.reduce((total, release) => {
-        const asset = findInstallerAsset(release);
+        const asset = findInstallerAsset(release, product);
         return total + (asset ? asset.download_count || 0 : 0);
       }, 0);
     }
@@ -652,28 +708,36 @@
 
         const release = await latestResponse.json();
         const releases = await releasesResponse.json();
-        const asset = findInstallerAsset(release);
-        const totalDownloads = countInstallerDownloads(Array.isArray(releases) ? releases : [release]);
+        const wordAsset = findInstallerAsset(release, "word");
+        const pptAsset = findInstallerAsset(release, "ppt");
+        const releaseList = Array.isArray(releases) ? releases : [release];
+        const totalDownloads = countInstallerDownloads(releaseList, "word") + countInstallerDownloads(releaseList, "ppt");
 
-        versionText.textContent = release.tag_name || "未知";
+        wordVersionText.textContent = installerVersion(release, "word", release.tag_name || "未知");
+        pptVersionText.textContent = installerVersion(release, "ppt", pptAsset ? "最新" : "待发布");
         dateText.textContent = formatDate(release.published_at || release.created_at);
-        sizeText.textContent = asset ? formatBytes(asset.size) : "未知";
+        wordSizeText.textContent = wordAsset ? formatBytes(wordAsset.size) : "未知";
+        pptSizeText.textContent = pptAsset ? formatBytes(pptAsset.size) : "待发布";
         downloadCountText.textContent = formatCount(totalDownloads);
-        applyDownloadLinks(latestDownloadUrl, latestChecksumUrl);
-        setStatus(asset ? "已获取最新发布信息和累计下载统计。" : "已获取版本信息，但未找到安装包资产。");
+        applyDownloadLinks();
+        setStatus(wordAsset && pptAsset ? "已获取 Word 和 PPT 最新发布信息。" : "已获取发布信息，PPT 下载位将在安装包发布后自动启用。");
       } catch (error) {
-        versionText.textContent = "最新版本";
+        wordVersionText.textContent = "最新版本";
+        pptVersionText.textContent = "待发布";
         dateText.textContent = "请查看 GitHub";
-        sizeText.textContent = "约 2.8 MB";
+        wordSizeText.textContent = "约 2.8 MB";
+        pptSizeText.textContent = "约 2.2 MB";
         downloadCountText.textContent = "暂不可用";
-        applyDownloadLinks(latestDownloadUrl, latestChecksumUrl);
+        applyDownloadLinks();
         setStatus("暂时无法读取 GitHub API，下载按钮仍指向最新版安装包。");
       }
     }
 
-    applyDownloadLinks(latestDownloadUrl, latestChecksumUrl);
-    downloadButton.addEventListener("click", (event) => handleRoutedLinkClick(event, () => currentDownloadUrl));
-    checksumLink.addEventListener("click", (event) => handleRoutedLinkClick(event, () => currentChecksumUrl));
+    applyDownloadLinks();
+    wordDownloadButton.addEventListener("click", (event) => handleRoutedLinkClick(event, () => currentWordDownloadUrl));
+    pptDownloadButton.addEventListener("click", (event) => handleRoutedLinkClick(event, () => currentPptDownloadUrl));
+    wordChecksumLink.addEventListener("click", (event) => handleRoutedLinkClick(event, () => currentWordChecksumUrl));
+    pptChecksumLink.addEventListener("click", (event) => handleRoutedLinkClick(event, () => currentPptChecksumUrl));
     refreshDownloadRoute();
     loadRelease();
   </script>
