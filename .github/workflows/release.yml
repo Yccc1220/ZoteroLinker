@@ -27,6 +27,9 @@ jobs:
       version: ${{ steps.validate.outputs.version }}
       installer_path: ${{ steps.validate.outputs.installer_path }}
       checksum_path: ${{ steps.validate.outputs.checksum_path }}
+      ppt_version: ${{ steps.validate.outputs.ppt_version }}
+      ppt_installer_path: ${{ steps.validate.outputs.ppt_installer_path }}
+      ppt_checksum_path: ${{ steps.validate.outputs.ppt_checksum_path }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -45,32 +48,55 @@ jobs:
             exit 1
           fi
 
+          validate_checksum() {
+            local installer="$1"
+            local checksum="${installer}.sha256"
+            test -f "$installer"
+            test -f "$checksum"
+
+            local expected actual
+            expected="$(awk '{print tolower($1)}' "$checksum")"
+            actual="$(sha256sum "$installer" | awk '{print $1}')"
+            if [[ "$actual" != "$expected" ]]; then
+              echo "Installer checksum mismatch: $installer" >&2
+              echo "Expected: $expected" >&2
+              echo "Actual:   $actual" >&2
+              exit 1
+            fi
+            echo "Validated $installer ($actual)"
+          }
+
           installer="release/ZoteroLinkerSetup-${version}.exe"
           checksum="${installer}.sha256"
-          test -f "$installer"
-          test -f "$checksum"
+          validate_checksum "$installer"
 
-          expected="$(awk '{print tolower($1)}' "$checksum")"
-          actual="$(sha256sum "$installer" | awk '{print $1}')"
-          if [[ "$actual" != "$expected" ]]; then
-            echo "Installer checksum mismatch." >&2
-            echo "Expected: $expected" >&2
-            echo "Actual:   $actual" >&2
+          shopt -s nullglob
+          ppt_installers=(release/ZoteroLinkerPptSetup-[0-9]*.[0-9]*.[0-9]*.exe)
+          if (( ${#ppt_installers[@]} == 0 )); then
+            echo "No versioned PowerPoint installer found." >&2
             exit 1
           fi
+          ppt_installer="$(printf '%s\n' "${ppt_installers[@]}" | sort -V | tail -n1)"
+          ppt_checksum="${ppt_installer}.sha256"
+          ppt_version="$(basename "$ppt_installer" | sed -E 's/^ZoteroLinkerPptSetup-([0-9]+\.[0-9]+\.[0-9]+)\.exe$/\1/')"
+          validate_checksum "$ppt_installer"
 
-          echo "Validated $installer ($actual)"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "installer_path=$installer" >> "$GITHUB_OUTPUT"
           echo "checksum_path=$checksum" >> "$GITHUB_OUTPUT"
+          echo "ppt_version=$ppt_version" >> "$GITHUB_OUTPUT"
+          echo "ppt_installer_path=$ppt_installer" >> "$GITHUB_OUTPUT"
+          echo "ppt_checksum_path=$ppt_checksum" >> "$GITHUB_OUTPUT"
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: zotero-linker-installer
+          name: zotero-linker-installers
           path: |
             ${{ steps.validate.outputs.installer_path }}
             ${{ steps.validate.outputs.checksum_path }}
+            ${{ steps.validate.outputs.ppt_installer_path }}
+            ${{ steps.validate.outputs.ppt_checksum_path }}
           if-no-files-found: error
 
   publish-release:
@@ -85,7 +111,7 @@ jobs:
       - name: Download installer artifact
         uses: actions/download-artifact@v4
         with:
-          name: zotero-linker-installer
+          name: zotero-linker-installers
           path: publish-assets
 
       - name: List release assets
@@ -100,11 +126,18 @@ jobs:
           mkdir -p publish-assets-flat
           find publish-assets -type f -name "ZoteroLinkerSetup-${{ needs.validate-installer.outputs.version }}.exe" -exec cp -v {} publish-assets-flat/ \;
           find publish-assets -type f -name "ZoteroLinkerSetup-${{ needs.validate-installer.outputs.version }}.exe.sha256" -exec cp -v {} publish-assets-flat/ \;
+          find publish-assets -type f -name "ZoteroLinkerPptSetup-${{ needs.validate-installer.outputs.ppt_version }}.exe" -exec cp -v {} publish-assets-flat/ \;
+          find publish-assets -type f -name "ZoteroLinkerPptSetup-${{ needs.validate-installer.outputs.ppt_version }}.exe.sha256" -exec cp -v {} publish-assets-flat/ \;
           test -f "publish-assets-flat/ZoteroLinkerSetup-${{ needs.validate-installer.outputs.version }}.exe"
           test -f "publish-assets-flat/ZoteroLinkerSetup-${{ needs.validate-installer.outputs.version }}.exe.sha256"
+          test -f "publish-assets-flat/ZoteroLinkerPptSetup-${{ needs.validate-installer.outputs.ppt_version }}.exe"
+          test -f "publish-assets-flat/ZoteroLinkerPptSetup-${{ needs.validate-installer.outputs.ppt_version }}.exe.sha256"
           cp -v "publish-assets-flat/ZoteroLinkerSetup-${{ needs.validate-installer.outputs.version }}.exe" "publish-assets-flat/ZoteroLinkerSetup.exe"
           latest_hash="$(sha256sum "publish-assets-flat/ZoteroLinkerSetup.exe" | awk '{print $1}')"
           printf "%s  ZoteroLinkerSetup.exe\n" "$latest_hash" > "publish-assets-flat/ZoteroLinkerSetup.exe.sha256"
+          cp -v "publish-assets-flat/ZoteroLinkerPptSetup-${{ needs.validate-installer.outputs.ppt_version }}.exe" "publish-assets-flat/ZoteroLinkerPptSetup.exe"
+          latest_ppt_hash="$(sha256sum "publish-assets-flat/ZoteroLinkerPptSetup.exe" | awk '{print $1}')"
+          printf "%s  ZoteroLinkerPptSetup.exe\n" "$latest_ppt_hash" > "publish-assets-flat/ZoteroLinkerPptSetup.exe.sha256"
 
       - name: Prepare release notes
         shell: bash
@@ -120,11 +153,11 @@ jobs:
             {
               printf '%s\n' '## 中文'
               printf '\n'
-              printf '%s\n' '本次发布包含 Windows 安装包更新。'
+              printf '%s\n' '本次发布包含 Word 和 PowerPoint Windows 安装包。'
               printf '\n'
               printf '%s\n' '## English'
               printf '\n'
-              printf '%s\n' 'This release contains an updated Windows installer.'
+              printf '%s\n' 'This release contains the Word and PowerPoint Windows installers.'
             } > release-notes-body.md
           fi
 
@@ -138,4 +171,8 @@ jobs:
             publish-assets-flat/ZoteroLinkerSetup-${{ needs.validate-installer.outputs.version }}.exe.sha256
             publish-assets-flat/ZoteroLinkerSetup.exe
             publish-assets-flat/ZoteroLinkerSetup.exe.sha256
+            publish-assets-flat/ZoteroLinkerPptSetup-${{ needs.validate-installer.outputs.ppt_version }}.exe
+            publish-assets-flat/ZoteroLinkerPptSetup-${{ needs.validate-installer.outputs.ppt_version }}.exe.sha256
+            publish-assets-flat/ZoteroLinkerPptSetup.exe
+            publish-assets-flat/ZoteroLinkerPptSetup.exe.sha256
           body_path: release-notes-body.md
