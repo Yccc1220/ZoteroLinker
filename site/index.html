@@ -789,6 +789,79 @@
         margin-top: 10px;
       }
     }
+
+    .community-teaser {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+      margin-right: 22px;
+      color: var(--muted);
+      text-decoration: none;
+      flex: 0 0 auto;
+    }
+
+    .community-teaser:hover .community-qr-crop {
+      border-color: var(--blue);
+    }
+
+    .community-qr-crop {
+      width: 88px;
+      height: 100px;
+      overflow: hidden;
+      box-sizing: border-box;
+      border: 1px solid rgba(35, 95, 174, 0.18);
+      border-radius: 6px;
+      background: #fff;
+    }
+
+    .community-qr-crop img {
+      display: block;
+      width: 88px;
+      max-width: none;
+      height: auto;
+      transform: translateY(-27px);
+    }
+
+    .community-teaser-copy {
+      display: grid;
+      gap: 3px;
+      font-size: 11px;
+      line-height: 1.25;
+      white-space: nowrap;
+    }
+
+    .community-teaser-copy strong {
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 760px) {
+      .community-teaser {
+        margin-right: 10px;
+      }
+
+      .community-teaser-copy {
+        display: none;
+      }
+
+      .community-qr-crop {
+        width: 62px;
+        height: 70px;
+      }
+
+      .community-qr-crop img {
+        width: 62px;
+        transform: translateY(-19px);
+      }
+    }
+
+    @media (max-width: 360px) {
+      .community-teaser {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -796,6 +869,15 @@
     <nav class="nav" aria-label="主导航">
       <a class="brand" href="https://github.com/Yccc1220/ZoteroLinker" target="_blank" rel="noreferrer">
         <img src="./assets/zotero-linker-brand-cropped.png" alt="Zotero Linker" width="1465" height="1159" fetchpriority="high">
+      </a>
+      <a class="community-teaser" href="./assets/zotero-linker-community.jpg" target="_blank" rel="noreferrer" title="点击查看完整二维码" aria-label="打开 Zotero Linker 交流群二维码">
+        <span class="community-qr-crop">
+          <img src="./assets/zotero-linker-community.jpg" alt="Zotero Linker 交流群二维码" width="941" height="1413">
+        </span>
+        <span class="community-teaser-copy">
+          <strong>加入交流</strong>
+          <span>QQ群 958296519</span>
+        </span>
       </a>
       <a class="nav-link" href="https://github.com/Yccc1220/ZoteroLinker/releases/latest" target="_blank" rel="noreferrer">GitHub Release</a>
     </nav>
