@@ -12,7 +12,7 @@ namespace Zotero_linker
     {
         private const float DefaultCitationFontSize = 10f;
 
-        internal LinkResult LinkCitations(Word.Document document, Color citationColor, float fontSize)
+        internal LinkResult LinkCitations(Word.Document document, Color citationColor)
         {
             if (document == null)
             {
@@ -97,7 +97,7 @@ namespace Zotero_linker
                         {
                             string temporaryBookmarkName = BuildTemporaryCitationBookmarkName(pendingCitationLinks.Count);
                             AddOrReplaceBookmark(document, temporaryBookmarkName, citationRange);
-                            ApplyCitationFormatting(citationRange, citationColor, fontSize);
+                            ApplyCitationFormatting(citationRange, citationColor);
                             pendingCitationLinks.Add(new PendingCitationLink(
                                 temporaryBookmarkName,
                                 bibliographyBookmarkName,
@@ -119,15 +119,15 @@ namespace Zotero_linker
                             temporaryRange,
                             pendingLink.BibliographyBookmarkName,
                             pendingLink.ScreenTip);
-                        ApplyCitationFormatting(citationHyperlink.Range, citationColor, fontSize);
-                        ApplyCitationFormatting(temporaryRange, citationColor, fontSize);
+                        ApplyCitationFormatting(citationHyperlink.Range, citationColor);
+                        ApplyCitationFormatting(temporaryRange, citationColor);
                         document.Bookmarks[pendingLink.TemporaryBookmarkName].Delete();
                         result.Linked += 1;
                     }
                 }
 
                 result.LinkedBacklinks += AddPendingBibliographyBacklinks(document, pendingBibliographyBacklinks);
-                RestoreCitationFormatting(document, citationColor, fontSize);
+                RestoreCitationFormatting(document, citationColor);
                 return result;
             }
             finally
@@ -199,7 +199,7 @@ namespace Zotero_linker
             return result;
         }
 
-        internal int RestoreCitationFormatting(Word.Document document, Color citationColor, float fontSize)
+        internal int RestoreCitationFormatting(Word.Document document, Color citationColor)
         {
             if (document == null)
             {
@@ -213,7 +213,7 @@ namespace Zotero_linker
             {
                 if (IsZoteroCitationCode(SafeFieldCode(field)))
                 {
-                    if (ApplyCitationFormatting(field.Result, citationColor, fontSize))
+                    if (ApplyCitationFormatting(field.Result, citationColor))
                     {
                         changed += 1;
                     }
@@ -234,7 +234,41 @@ namespace Zotero_linker
                 }
                 else
                 {
-                    ApplyCitationFormatting(hyperlink.Range, citationColor, fontSize);
+                    if (ApplyCitationFormatting(hyperlink.Range, citationColor))
+                    {
+                        changed += 1;
+                    }
+                }
+            }
+
+            return changed;
+        }
+
+        internal int ApplyCitationFontSize(Word.Document document, float fontSize)
+        {
+            if (document == null)
+            {
+                throw new InvalidOperationException("No active Word document.");
+            }
+
+            int changed = 0;
+            foreach (Word.Field field in document.Fields)
+            {
+                if (IsZoteroCitationCode(SafeFieldCode(field)) &&
+                    ApplyCitationFontSize(field.Result, fontSize))
+                {
+                    changed += 1;
+                }
+            }
+
+            foreach (Word.Hyperlink hyperlink in document.Hyperlinks)
+            {
+                string subAddress = NormalizeCiteName(hyperlink.SubAddress);
+                if (IsCiteName(subAddress) &&
+                    !IsCitationBackBookmarkName(subAddress) &&
+                    ApplyCitationFontSize(hyperlink.Range, fontSize))
+                {
+                    changed += 1;
                 }
             }
 
@@ -251,7 +285,7 @@ namespace Zotero_linker
             EnsureZoteroHyperlinkStyles(document, citationColor);
         }
 
-        internal int RestoreLinkedCitationFormatting(Word.Document document, Color citationColor, float fontSize)
+        internal int RestoreLinkedCitationFormatting(Word.Document document, Color citationColor)
         {
             if (document == null)
             {
@@ -278,7 +312,7 @@ namespace Zotero_linker
                 }
                 else
                 {
-                    if (ApplyCitationFormatting(hyperlink.Range, citationColor, fontSize))
+                    if (ApplyCitationFormatting(hyperlink.Range, citationColor))
                     {
                         changed += 1;
                     }
@@ -288,7 +322,7 @@ namespace Zotero_linker
             return changed;
         }
 
-        internal void RestoreFollowedHyperlinkFormatting(Word.Hyperlink hyperlink, Color citationColor, float fontSize)
+        internal void RestoreFollowedHyperlinkFormatting(Word.Hyperlink hyperlink, Color citationColor)
         {
             if (hyperlink == null)
             {
@@ -307,7 +341,7 @@ namespace Zotero_linker
             }
             else
             {
-                ApplyCitationFormatting(hyperlink.Range, citationColor, fontSize);
+                ApplyCitationFormatting(hyperlink.Range, citationColor);
             }
         }
 
@@ -1126,7 +1160,7 @@ namespace Zotero_linker
             return FindAllRanges(sourceRange, query, matchCase).FirstOrDefault();
         }
 
-        private static bool ApplyCitationFormatting(Word.Range range, Color color, float fontSize)
+        private static bool ApplyCitationFormatting(Word.Range range, Color color)
         {
             if (range == null)
             {
@@ -1136,9 +1170,18 @@ namespace Zotero_linker
             Word.Font font = range.Font;
             bool changed = false;
             changed |= SetFontColorIfNeeded(font, (Word.WdColor)ColorTranslator.ToOle(color));
-            changed |= SetFontSizeIfNeeded(font, fontSize);
             changed |= SetFontUnderlineIfNeeded(font, Word.WdUnderline.wdUnderlineNone);
             return changed;
+        }
+
+        private static bool ApplyCitationFontSize(Word.Range range, float fontSize)
+        {
+            if (range == null)
+            {
+                return false;
+            }
+
+            return SetFontSizeIfNeeded(range.Font, fontSize);
         }
 
         private static bool ApplyBibliographyBacklinkFormatting(Word.Range range)
