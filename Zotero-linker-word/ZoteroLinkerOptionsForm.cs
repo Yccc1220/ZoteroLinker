@@ -9,8 +9,8 @@ namespace Zotero_linker
     {
         private ComboBox colorComboBox;
         private NumericUpDown fontSizeUpDown;
-        private Button saveButton;
-        private Button cancelButton;
+        private Button applyColorButton;
+        private Button applyFontSizeButton;
 
         public ZoteroLinkerOptionsForm()
             : this(ZoteroLinkerOptions.Load())
@@ -19,6 +19,9 @@ namespace Zotero_linker
 
         internal ZoteroLinkerOptionsForm(ZoteroLinkerOptions options)
         {
+            const int actionButtonWidth = 128;
+            const int actionButtonHeight = 30;
+
             if (options == null)
             {
                 options = new ZoteroLinkerOptions();
@@ -46,11 +49,12 @@ namespace Zotero_linker
 
             colorComboBox = new ComboBox
             {
+                Dock = DockStyle.Fill,
                 DrawMode = DrawMode.OwnerDrawFixed,
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 IntegralHeight = false,
                 ItemHeight = Math.Max(Font.Height + 8, 24),
-                Margin = new Padding(0, 0, 0, 12),
+                Margin = new Padding(0, 0, 8, 0),
                 Width = Math.Max(220, TextRenderer.MeasureText("Green (#00FF00)", Font).Width + 56)
             };
             colorComboBox.DropDownWidth = colorComboBox.Width;
@@ -59,7 +63,7 @@ namespace Zotero_linker
             colorComboBox.Items.Add(new ColorOption("Blue", "#0000FF", Color.FromArgb(0, 0, 255)));
             colorComboBox.Items.Add(new ColorOption("Green", "#00FF00", Color.FromArgb(0, 255, 0)));
             colorComboBox.Items.Add(new ColorOption("Black", "#000000", Color.FromArgb(0, 0, 0)));
-            colorComboBox.SelectedIndex = FindColorIndex(options.ColorHex ?? "#FF0000");
+            colorComboBox.SelectedItem = FindColorOption(options.ColorHex ?? "#FF0000");
 
             Label fontLabel = new Label
             {
@@ -70,71 +74,71 @@ namespace Zotero_linker
 
             fontSizeUpDown = new NumericUpDown
             {
-                AutoSize = true,
+                AutoSize = false,
+                Dock = DockStyle.Fill,
                 DecimalPlaces = 1,
                 Minimum = (decimal)ZoteroLinkerOptions.MinFontSize,
                 Maximum = (decimal)ZoteroLinkerOptions.MaxFontSize,
-                Margin = new Padding(0, 0, 0, 14),
+                Margin = new Padding(0, 0, 8, 0),
                 Increment = 0.5M,
                 Value = (decimal)ZoteroLinkerOptions.ClampFontSize(options.FontSize),
                 Width = Math.Max(100, TextRenderer.MeasureText("00.0", Font).Width + 44)
             };
 
-            saveButton = new Button
+            applyColorButton = new Button
             {
-                AutoSize = true,
-                MinimumSize = new Size(84, 0),
-                Text = "Save",
-                DialogResult = DialogResult.OK
-            };
-
-            cancelButton = new Button
-            {
-                AutoSize = true,
-                MinimumSize = new Size(84, 0),
-                Text = "Cancel",
-                DialogResult = DialogResult.Cancel
-            };
-
-            FlowLayoutPanel buttonsPanel = new FlowLayoutPanel
-            {
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                Anchor = AnchorStyles.Right,
-                FlowDirection = FlowDirection.LeftToRight,
+                AutoSize = false,
+                Dock = DockStyle.Fill,
                 Margin = new Padding(0),
-                WrapContents = false
+                MinimumSize = new Size(actionButtonWidth, actionButtonHeight),
+                Size = new Size(actionButtonWidth, actionButtonHeight),
+                Text = "Apply Color"
             };
-            buttonsPanel.Controls.Add(saveButton);
-            buttonsPanel.Controls.Add(cancelButton);
+            applyColorButton.Click += ApplyColorButton_Click;
+
+            applyFontSizeButton = new Button
+            {
+                AutoSize = false,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0),
+                MinimumSize = new Size(actionButtonWidth, actionButtonHeight),
+                Size = new Size(actionButtonWidth, actionButtonHeight),
+                Text = "Apply Font Size"
+            };
+            applyFontSizeButton.Click += ApplyFontSizeButton_Click;
 
             TableLayoutPanel layout = new TableLayoutPanel
             {
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                ColumnCount = 1,
+                ColumnCount = 2,
                 Dock = DockStyle.Fill,
                 Margin = new Padding(0),
-                RowCount = 5
+                RowCount = 4
             };
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, colorComboBox.Width));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, actionButtonWidth));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.Controls.Add(colorLabel, 0, 0);
+            layout.SetColumnSpan(colorLabel, 2);
             layout.Controls.Add(colorComboBox, 0, 1);
+            layout.Controls.Add(applyColorButton, 1, 1);
             layout.Controls.Add(fontLabel, 0, 2);
+            layout.SetColumnSpan(fontLabel, 2);
             layout.Controls.Add(fontSizeUpDown, 0, 3);
-            layout.Controls.Add(buttonsPanel, 0, 4);
+            layout.Controls.Add(applyFontSizeButton, 1, 3);
             Controls.Add(layout);
 
-            AcceptButton = saveButton;
-            CancelButton = cancelButton;
             ResumeLayout(false);
             PerformLayout();
         }
+
+        internal event EventHandler ApplyColorRequested;
+
+        internal event EventHandler ApplyFontSizeRequested;
 
         internal string ColorHex
         {
@@ -151,19 +155,36 @@ namespace Zotero_linker
             get { return (float)fontSizeUpDown.Value; }
         }
 
-        private int FindColorIndex(string colorHex)
+        private void ApplyColorButton_Click(object sender, EventArgs e)
+        {
+            EventHandler handler = ApplyColorRequested;
+            if (handler != null)
+            {
+                handler(this, EventArgs.Empty);
+            }
+        }
+
+        private void ApplyFontSizeButton_Click(object sender, EventArgs e)
+        {
+            EventHandler handler = ApplyFontSizeRequested;
+            if (handler != null)
+            {
+                handler(this, EventArgs.Empty);
+            }
+        }
+
+        private ColorOption FindColorOption(string colorHex)
         {
             string normalized = ZoteroLinkerOptions.NormalizeColorHex(colorHex);
-            for (int index = 0; index < colorComboBox.Items.Count; index += 1)
+            foreach (ColorOption option in colorComboBox.Items)
             {
-                ColorOption option = (ColorOption)colorComboBox.Items[index];
                 if (string.Equals(option.Hex, normalized, StringComparison.OrdinalIgnoreCase))
                 {
-                    return index;
+                    return option;
                 }
             }
 
-            return 0;
+            return (ColorOption)colorComboBox.Items[0];
         }
 
         private void ColorComboBox_DrawItem(object sender, DrawItemEventArgs e)

@@ -46,8 +46,7 @@ namespace Zotero_linker
                 ZoteroLinkerOptions options = GetOptions();
                 LinkResult result = GetLinkerService().LinkCitations(
                     document,
-                    options.CitationColor,
-                    options.FontSize);
+                    options.CitationColor);
 
                 ShowStatus(
                     "Link citations",
@@ -77,8 +76,7 @@ namespace Zotero_linker
                 ZoteroLinkerOptions options = GetOptions();
                 int changed = GetLinkerService().RestoreCitationFormatting(
                     document,
-                    options.CitationColor,
-                    options.FontSize);
+                    options.CitationColor);
                 ShowStatus(
                     "Remove links",
                     string.Format(
@@ -100,8 +98,7 @@ namespace Zotero_linker
                 ZoteroLinkerOptions options = GetOptions();
                 int changed = GetLinkerService().RestoreCitationFormatting(
                     document,
-                    options.CitationColor,
-                    options.FontSize);
+                    options.CitationColor);
                 ShowStatus(
                     "Repair formatting",
                     string.Format("Repaired citation fields {0}", changed),
@@ -117,31 +114,15 @@ namespace Zotero_linker
                 ZoteroLinkerOptions options = GetOptions();
                 using (ZoteroLinkerOptionsForm form = new ZoteroLinkerOptionsForm(options))
                 {
-                    if (form.ShowDialog() != DialogResult.OK)
+                    form.ApplyColorRequested += delegate
                     {
-                        return;
-                    }
-
-                    options.ColorHex = form.ColorHex;
-                    options.FontSize = form.FontSize;
-                    options.Save();
-                    Globals.ThisAddIn.RefreshOptions();
-
-                    int changed = 0;
-                    Word.Document document = Globals.ThisAddIn.Application.ActiveDocument;
-                    if (document != null)
+                        ApplyOptionColor(form, options);
+                    };
+                    form.ApplyFontSizeRequested += delegate
                     {
-                        changed = GetLinkerService().RestoreCitationFormatting(
-                            document,
-                            options.CitationColor,
-                            options.FontSize);
-                    }
-
-                    ShowStatus(
-                        "Options saved",
-                        string.Format("Updated citation fields {0}", changed),
-                        string.Format("Color {0}; font size {1:0.#} pt; done", options.ColorHex, options.FontSize),
-                        false);
+                        ApplyOptionFontSize(form, options);
+                    };
+                    form.ShowDialog();
                 }
             }
             catch (Exception ex)
@@ -151,6 +132,98 @@ namespace Zotero_linker
                     "Zotero Linker",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
+            }
+        }
+
+        private void ApplyOptionColor(ZoteroLinkerOptionsForm form, ZoteroLinkerOptions options)
+        {
+            try
+            {
+                options.ColorHex = form.ColorHex;
+                options.Save();
+                Globals.ThisAddIn.RefreshOptions();
+
+                Word.Document document = Globals.ThisAddIn.Application.ActiveDocument;
+                int changed = document == null
+                    ? 0
+                    : GetLinkerService().RestoreCitationFormatting(document, options.CitationColor);
+                if (document != null)
+                {
+                    RefreshDocumentScreen(document);
+                }
+                ShowStatus(
+                    "Color applied",
+                    document == null
+                        ? "Color option updated"
+                        : string.Format("Updated citation ranges {0}", changed),
+                    "Existing citation sizes unchanged",
+                    false);
+            }
+            catch (Exception ex)
+            {
+                ShowOptionError(ex);
+            }
+        }
+
+        private void ApplyOptionFontSize(ZoteroLinkerOptionsForm form, ZoteroLinkerOptions options)
+        {
+            try
+            {
+                options.FontSize = form.FontSize;
+                options.Save();
+                Globals.ThisAddIn.RefreshOptions();
+
+                Word.Document document = Globals.ThisAddIn.Application.ActiveDocument;
+                if (document == null)
+                {
+                    ShowStatus("Font size saved", "No active Word document", "Existing citation sizes unchanged", false);
+                    return;
+                }
+
+                DialogResult applyResult = MessageBox.Show(
+                    string.Format(
+                        "Apply {0:0.#} pt to all Zotero citations in the active document?",
+                        options.FontSize),
+                    "Zotero Linker",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+                if (applyResult != DialogResult.Yes)
+                {
+                    ShowStatus("Font size saved", "Existing citation sizes were not changed", "Cancelled.", false);
+                    return;
+                }
+
+                int changed = GetLinkerService().ApplyCitationFontSize(document, options.FontSize);
+                RefreshDocumentScreen(document);
+                ShowStatus(
+                    "Font size applied",
+                    string.Format("Updated citation ranges {0}", changed),
+                    "Done.",
+                    false);
+            }
+            catch (Exception ex)
+            {
+                ShowOptionError(ex);
+            }
+        }
+
+        private static void ShowOptionError(Exception ex)
+        {
+            MessageBox.Show(
+                ex.Message,
+                "Zotero Linker",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+
+        private static void RefreshDocumentScreen(Word.Document document)
+        {
+            try
+            {
+                document.Application.ScreenRefresh();
+            }
+            catch
+            {
             }
         }
 

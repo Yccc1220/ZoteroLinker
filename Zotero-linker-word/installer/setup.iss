@@ -1,7 +1,7 @@
-; Zotero Linker - Inno Setup Installer
+; Zotero Linker Word - Inno Setup Installer
 ; Build: iscc /DVersion=1.0.0 /DConfig=Release setup.iss
 
-#define AppName "Zotero Linker"
+#define AppName "Zotero Linker Word"
 #define AppPublisher "Yccc1220"
 #define AppUrl "https://github.com/Yccc1220/ZoteroLinker"
 #define AddInName "Zotero-linker"
@@ -21,7 +21,7 @@ AppVersion={#Version}
 AppPublisher={#AppPublisher}
 AppPublisherURL={#AppUrl}
 DefaultDirName={commonpf}\Zotero Linker
-DefaultGroupName=Zotero Linker
+DefaultGroupName=Zotero Linker Word
 DisableProgramGroupPage=yes
 OutputDir=..\dist
 OutputBaseFilename=ZoteroLinkerWordSetup-{#Version}
@@ -119,11 +119,11 @@ Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-Execution
 
 [CustomMessages]
 english.InstallingCertificate=Installing add-in certificate...
-english.RegisteringWord=Registering Zotero Linker for Word...
-english.RegisteringWps=Registering Zotero Linker for WPS Writer...
+english.RegisteringWord=Registering Zotero Linker Word for Microsoft Word...
+english.RegisteringWps=Registering Zotero Linker Word for WPS Writer...
 chinesesimplified.InstallingCertificate=Installing add-in certificate...
-chinesesimplified.RegisteringWord=Registering Zotero Linker for Word...
-chinesesimplified.RegisteringWps=Registering Zotero Linker for WPS Writer...
+chinesesimplified.RegisteringWord=Registering Zotero Linker Word for Microsoft Word...
+chinesesimplified.RegisteringWps=Registering Zotero Linker Word for WPS Writer...
 
 [Code]
 function VstoInstallerExists: Boolean;

@@ -218,6 +218,19 @@ function Assert-Equal {
     }
 }
 
+function Assert-FontSize {
+    param(
+        [object] $Range,
+        [single] $Expected,
+        [string] $Message
+    )
+
+    $actual = [single] $Range.Font.Size
+    if ([math]::Abs($actual - $Expected) -ge 0.05) {
+        throw "$Message Expected=[$Expected] Actual=[$actual]"
+    }
+}
+
 function Get-InternalValue {
     param(
         [object] $Object,
@@ -290,13 +303,11 @@ function Invoke-WordIntegrationCase {
 
         $citationField = $document.Fields.Item(1)
         $bibliographyField = $document.Fields.Item(2)
-
-        $scanBefore = $scanMethod.Invoke($service, [object[]] @($document))
-        Assert-Equal (Get-InternalValue $scanBefore 'CitationFields') 1 "$Name scan before link citation count mismatch."
-        Assert-Equal (Get-InternalValue $scanBefore 'BibliographyFields') 1 "$Name scan before link bibliography count mismatch."
+        $citationField.Result.Font.Size = [single] 12
+        $bibliographyField.Result.Font.Size = [single] 11
 
         $red = [System.Drawing.Color]::FromArgb(255, 0, 0)
-        $linkResult = $linkMethod.Invoke($service, [object[]] @($document, $red, [single] 10))
+        $linkResult = $linkMethod.Invoke($service, [object[]] @($document, $red))
         $linked = Get-InternalValue $linkResult 'Linked'
         $linkedBacklinks = Get-InternalValue $linkResult 'LinkedBacklinks'
         $failedBibliographyMatch = Get-InternalValue $linkResult 'FailedBibliographyMatch'
@@ -313,6 +324,8 @@ function Invoke-WordIntegrationCase {
         Assert-Equal $linkedBacklinks $ExpectedBacklinks "$Name linked bibliography backlink count mismatch."
         Assert-Equal $failedBibliographyMatch 0 "$Name bibliography match failure count mismatch."
         Assert-Equal $failedCitationRange 0 "$Name citation range failure count mismatch."
+        Assert-FontSize $citationField.Result 12 "$Name link workflow changed citation font size."
+        Assert-FontSize $bibliographyField.Result 11 "$Name link workflow changed bibliography font size."
 
         $citeHyperlinks = 0
         $backlinks = 0
@@ -391,6 +404,16 @@ function Invoke-WordIntegrationCase {
         }
 
         Assert-Equal $remainingCiteHyperlinks 0 "$Name remaining citation hyperlinks after remove mismatch."
+        Assert-FontSize $citationField.Result 12 "$Name remove workflow changed citation font size."
+        Assert-FontSize $bibliographyField.Result 11 "$Name remove workflow changed bibliography font size."
+
+        $formatMethod.Invoke($service, [object[]] @($document, $red)) | Out-Null
+        Assert-FontSize $citationField.Result 12 "$Name repair workflow changed citation font size."
+        Assert-FontSize $bibliographyField.Result 11 "$Name repair workflow changed bibliography font size."
+
+        $fontSizeMethod.Invoke($service, [object[]] @($document, [single] 10)) | Out-Null
+        Assert-FontSize $citationField.Result 10 "$Name explicit font size action did not update citation size."
+        Assert-FontSize $bibliographyField.Result 11 "$Name explicit font size action changed bibliography size."
         Write-Host "PASS $Name"
     }
     finally {
@@ -435,7 +458,7 @@ function Invoke-RepeatedRangeEndpointCase {
         $document = $word.Documents.Open($docxPath)
 
         $red = [System.Drawing.Color]::FromArgb(255, 0, 0)
-        $linkResult = $linkMethod.Invoke($service, [object[]] @($document, $red, [single] 10))
+        $linkResult = $linkMethod.Invoke($service, [object[]] @($document, $red))
         Assert-Equal (Get-InternalValue $linkResult 'FailedBibliographyMatch') 0 "$name bibliography match failure count mismatch."
         Assert-Equal (Get-InternalValue $linkResult 'FailedCitationRange') 0 "$name citation range failure count mismatch."
 
@@ -497,7 +520,7 @@ function Invoke-ShortTitleBibliographyDisambiguationCase {
         $document = $word.Documents.Open($docxPath)
 
         $red = [System.Drawing.Color]::FromArgb(255, 0, 0)
-        $linkResult = $linkMethod.Invoke($service, [object[]] @($document, $red, [single] 10))
+        $linkResult = $linkMethod.Invoke($service, [object[]] @($document, $red))
         Assert-Equal (Get-InternalValue $linkResult 'Linked') 1 "$name linked visible citation count mismatch."
         Assert-Equal (Get-InternalValue $linkResult 'LinkedBacklinks') 1 "$name linked bibliography backlink count mismatch."
         Assert-Equal (Get-InternalValue $linkResult 'FailedBibliographyMatch') 0 "$name bibliography match failure count mismatch."
@@ -550,9 +573,10 @@ $serviceType = $assembly.GetType('Zotero_linker.ZoteroLinkerService', $true)
 $service = [Activator]::CreateInstance($serviceType, $true)
 $linkMethod = $serviceType.GetMethod('LinkCitations', [System.Reflection.BindingFlags] 'NonPublic, Instance')
 $removeMethod = $serviceType.GetMethod('RemoveCitationLinks', [System.Reflection.BindingFlags] 'NonPublic, Instance')
-$scanMethod = $serviceType.GetMethod('ScanDocument', [System.Reflection.BindingFlags] 'NonPublic, Instance')
+$formatMethod = $serviceType.GetMethod('RestoreCitationFormatting', [System.Reflection.BindingFlags] 'NonPublic, Instance')
+$fontSizeMethod = $serviceType.GetMethod('ApplyCitationFontSize', [System.Reflection.BindingFlags] 'NonPublic, Instance')
 
-if ($null -eq $linkMethod -or $null -eq $removeMethod -or $null -eq $scanMethod) {
+if ($null -eq $linkMethod -or $null -eq $removeMethod -or $null -eq $formatMethod -or $null -eq $fontSizeMethod) {
     throw 'Required ZoteroLinkerService methods were not found. Build Debug configuration first.'
 }
 
