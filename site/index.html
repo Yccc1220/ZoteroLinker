@@ -987,6 +987,8 @@
   <script>
     const latestReleaseApiUrl = "https://api.github.com/repos/Yccc1220/ZoteroLinker/releases/latest";
     const releasesApiUrl = "https://api.github.com/repos/Yccc1220/ZoteroLinker/releases?per_page=100";
+    const tagsApiUrl = "https://api.github.com/repos/Yccc1220/ZoteroLinker/tags?per_page=100";
+    const releaseByTagApiUrl = "https://api.github.com/repos/Yccc1220/ZoteroLinker/releases/tags";
     const githubDownloadOrigin = "https://github.com";
     const chinaMirrorOrigins = [
       "https://loginvipcursor.icu",
@@ -1002,9 +1004,8 @@
     const latestPptDownloadUrl = `${githubDownloadOrigin}/Yccc1220/ZoteroLinker/releases/latest/download/ZoteroLinkerPptSetup.exe`;
     const latestWordChecksumUrl = `${latestWordDownloadUrl}.sha256`;
     const latestPptChecksumUrl = `${latestPptDownloadUrl}.sha256`;
-    // A previous Word asset replacement reset 62 downloads that GitHub no longer exposes.
-    const historicalDownloadOffsets = { word: 62, ppt: 0 };
-
+    // GitHub no longer exposes downloads from the Word asset deleted before v1.0.3.
+    const removedWordAssetDownloads = 62;
     const wordVersionText = document.getElementById("wordVersionText");
     const pptVersionText = document.getElementById("pptVersionText");
     const wordDateText = document.getElementById("wordDateText");
@@ -1291,15 +1292,42 @@
 
         const latestRelease = await latestResponse.json();
         const releases = await releasesResponse.json();
-        const releaseList = Array.isArray(releases) ? releases : [latestRelease];
+        let releaseList = Array.isArray(releases) ? releases : [];
+        if (releaseList.length === 0) {
+          try {
+            const tagsResponse = await fetch(tagsApiUrl, { headers: { "Accept": "application/vnd.github+json" } });
+            if (tagsResponse.ok) {
+              const tags = await tagsResponse.json();
+              const releaseResults = await Promise.allSettled(
+                tags
+                  .filter((tag) => /^v?\d+\.\d+\.\d+$/.test(tag.name) && tag.name !== latestRelease.tag_name)
+                  .map(async (tag) => {
+                    const response = await fetch(`${releaseByTagApiUrl}/${encodeURIComponent(tag.name)}`, {
+                      headers: { "Accept": "application/vnd.github+json" }
+                    });
+                    return response.ok ? response.json() : null;
+                  })
+              );
+              releaseList = [
+                latestRelease,
+                ...releaseResults
+                  .filter((result) => result.status === "fulfilled" && result.value)
+                  .map((result) => result.value)
+              ];
+            }
+          } catch (error) {
+            console.warn("Unable to rebuild GitHub release history from tags.", error);
+          }
+        }
+        if (releaseList.length === 0) releaseList = [latestRelease];
         const wordRelease = findProductRelease(releaseList, "word") || latestRelease;
         const pptRelease = findProductRelease(releaseList, "ppt") || latestRelease;
         const wordAsset = findInstallerAsset(wordRelease, "word");
         const pptAsset = findInstallerAsset(pptRelease, "ppt");
         const wordChecksumAsset = findChecksumAsset(wordRelease, wordAsset);
         const pptChecksumAsset = findChecksumAsset(pptRelease, pptAsset);
-        const wordDownloads = countInstallerDownloads(releaseList, "word") + historicalDownloadOffsets.word;
-        const pptDownloads = countInstallerDownloads(releaseList, "ppt") + historicalDownloadOffsets.ppt;
+        const wordDownloads = countInstallerDownloads(releaseList, "word") + removedWordAssetDownloads;
+        const pptDownloads = countInstallerDownloads(releaseList, "ppt");
         const wordVersion = installerVersion(wordRelease, "word", wordRelease.tag_name || "未知");
         const pptVersion = installerVersion(pptRelease, "ppt", pptAsset ? pptRelease.tag_name || "最新" : "待发布");
         const wordVersionRelease = [...releaseList].reverse().find((release) => installerVersion(release, "word", null) === wordVersion) || wordRelease;
