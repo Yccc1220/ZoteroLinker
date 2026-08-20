@@ -1,3 +1,5 @@
+
+
 # Zotero Linker
 
 中文 | [English](README.en.md)
@@ -73,4 +75,5 @@ ZoteroLinkerPptSetup.exe   # PowerPoint / WPS Presentation compatibility registr
 - `Zotero-linker-ppt/`：PowerPoint VSTO 插件源码和安装器。
 - `release/`：Word、PowerPoint 安装包及 SHA-256 校验文件。
 - `.github/workflows/release.yml`：GitHub Release 发布流程。
+- `.github/workflows/pages.yml`：GitHub Pages 下载页面部署流程。
 - `site/`：GitHub Pages 下载页面。
