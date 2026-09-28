@@ -4,7 +4,7 @@
 
 中文 | [English](README.en.md)
 
-Zotero Linker 是一组面向 Windows 的 Zotero Office 插件，包含 Word 引文导航插件和 PowerPoint 引用插件。Word 插件让正文引用与参考文献双向跳转；PowerPoint 插件把 Zotero 的样式选择、文献选择、编号引用和参考文献列表带进幻灯片。
+Zotero Linker 是一组面向 Windows 的 Zotero Office 插件，包含 Word 引文导航插件和 PowerPoint 引用插件。Word 插件支持数字编号、APA、MLA、Chicago 等引文形式的正文与参考文献双向跳转，并可手动为 DOI 建立超链接；PowerPoint 插件把 Zotero 的样式选择、文献选择、编号引用和参考文献列表带进幻灯片。
 
 产品族统一使用 `zoterolinker` 命名；Word 和 PowerPoint 插件分别使用 `zoterolinkerword` 与 `zoterolinkerppt`。现有 VSTO 内部标识继续保留，以兼容已安装版本。
 
@@ -12,9 +12,9 @@ Zotero Linker 是一组面向 Windows 的 Zotero Office 插件，包含 Word 引
 
 ### Word：引用存在，但不便导航
 
-Zotero 可以在 Word 中插入引用并生成参考文献，但正文中的 `[1]`、`[2-4]` 或 `[3, 5, 8]` 与文末条目之间通常缺少便捷的双向导航。长文档需要频繁滚动和查找，影响写作、阅读和审阅效率。
+Zotero 可以在 Word 中插入引用并生成参考文献，但数字编号、APA、MLA、Chicago 等正文引文与文末条目之间通常缺少便捷的双向导航。插件可处理 `[1]`、`[2-4]`、`(Smith, 2020)`、`Smith (2020)`、`(Smith 23; Jones 41)` 等形式，减少长文档中的滚动和查找。
 
-Word 插件保留 Zotero 原有引用域，为正文引用和参考文献条目建立双向链接，并提供格式修复和链接清理功能。
+Word 插件保留 Zotero 原有引用域和文本格式，为正文引用与参考文献条目建立双向链接，并提供 DOI 链接、手动格式调整和链接清理功能。
 
 ### PowerPoint：缺少 Zotero 原生引用工作流
 
@@ -25,10 +25,11 @@ PowerPoint 插件通过 Zotero 本地引用协议打开 Zotero 的文档首选�
 ## Word 插件
 
 - 正文引用跳转到参考文献，并支持从参考文献返回正文引用。
-- 支持 `[1]`、`[1,3,5]`、`[2-4]` 等数字引用形式。
+- 支持 `[1]`、`[1,3,5]`、`[2-4]` 等数字引用，以及 APA、MLA、Chicago 作者—年份、叙述式和多文献组合引文。
 - 结合 Zotero 域信息处理压缩引用中的可见和隐藏项目。
-- 修复引用颜色、下划线和字号。
-- 删除插件生成的链接和书签，同时保留 Zotero 引用域。
+- 手动为参考文献中的 `doi:`、`https://doi.org/` 和裸 DOI 建立超链接。
+- 在 Options 中分别手动应用引用颜色和字号；链接操作不会自动修改格式。
+- 删除插件生成的链接和书签，同时保留 Zotero 引用域及原有颜色、下划线和字号。
 - 支持 Microsoft Office Word 和 WPS Word/Writer。
 
 ## PowerPoint 插件

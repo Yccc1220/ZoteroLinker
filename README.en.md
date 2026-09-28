@@ -2,7 +2,7 @@
 
 [中文](README.md) | English
 
-Zotero Linker is a Windows suite for Zotero and Office. It includes a Word citation-navigation add-in and a PowerPoint citation add-in. The Word add-in links in-text citations with bibliography entries, while the PowerPoint add-in brings Zotero style selection, item selection, numbered citations, and bibliography generation into slide decks.
+Zotero Linker is a Windows suite for Zotero and Office. It includes a Word citation-navigation add-in and a PowerPoint citation add-in. The Word add-in links numeric, APA, MLA, Chicago, and other in-text citation formats with bibliography entries and can add DOI hyperlinks manually, while the PowerPoint add-in brings Zotero style selection, item selection, numbered citations, and bibliography generation into slide decks.
 
 The product family uses `zoterolinker`; the Word and PowerPoint products use `zoterolinkerword` and `zoterolinkerppt`. Existing internal VSTO identifiers remain unchanged for installed-version compatibility.
 
@@ -10,9 +10,9 @@ The product family uses `zoterolinker`; the Word and PowerPoint products use `zo
 
 ### Word: citations exist, but navigation is awkward
 
-Zotero can insert citations and generate bibliographies in Word, but citations such as `[1]`, `[2-4]`, or `[3, 5, 8]` do not always provide convenient two-way navigation to their bibliography entries. In long documents, repeated scrolling and searching slows writing, reading, and review.
+Zotero can insert citations and generate bibliographies in Word, but numeric, APA, MLA, and Chicago citations do not always provide convenient two-way navigation to their bibliography entries. The add-in handles forms such as `[1]`, `[2-4]`, `(Smith, 2020)`, `Smith (2020)`, and `(Smith 23; Jones 41)`, reducing repeated scrolling and searching in long documents.
 
-The Word add-in preserves Zotero fields, creates links in both directions, and provides formatting repair and link cleanup.
+The Word add-in preserves Zotero fields and existing text formatting, creates links in both directions, and provides DOI linking, explicit formatting controls, and link cleanup.
 
 ### PowerPoint: no equivalent Zotero citation workflow
 
@@ -23,10 +23,11 @@ The PowerPoint add-in uses Zotero's local citing protocol to open Zotero's docum
 ## Word Add-in
 
 - Link in-text citations to bibliography entries and back again.
-- Support numeric formats such as `[1]`, `[1,3,5]`, and `[2-4]`.
+- Support numeric formats such as `[1]`, `[1,3,5]`, and `[2-4]`, plus APA, MLA, Chicago author-date, narrative, and multi-source citations.
 - Use Zotero field data to handle visible and hidden items in compressed citations.
-- Repair citation color, underline, and font size.
-- Remove generated links and bookmarks while preserving Zotero fields.
+- Manually add hyperlinks for `doi:`, `https://doi.org/`, and bare DOI values in bibliography entries.
+- Apply citation color and font size separately from Options; link operations do not change formatting automatically.
+- Remove generated links and bookmarks while preserving Zotero fields, colors, underlines, and font sizes.
 - Support Microsoft Office Word and WPS Word/Writer.
 
 ## PowerPoint Add-in
