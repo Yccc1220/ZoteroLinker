@@ -231,6 +231,19 @@ function Assert-FontSize {
     }
 }
 
+function Assert-FontColor {
+    param(
+        [object] $Range,
+        [int] $Expected,
+        [string] $Message
+    )
+
+    $actual = [int] $Range.Font.Color
+    if ($actual -ne $Expected) {
+        throw "$Message Expected=[$Expected] Actual=[$actual]"
+    }
+}
+
 function Get-InternalValue {
     param(
         [object] $Object,
@@ -305,9 +318,11 @@ function Invoke-WordIntegrationCase {
         $bibliographyField = $document.Fields.Item(2)
         $citationField.Result.Font.Size = [single] 12
         $bibliographyField.Result.Font.Size = [single] 11
+        $citationField.Result.Font.Color = 0
+        $bibliographyField.Result.Font.Color = 0
 
         $red = [System.Drawing.Color]::FromArgb(255, 0, 0)
-        $linkResult = $linkMethod.Invoke($service, [object[]] @($document, $red))
+        $linkResult = $linkMethod.Invoke($service, [object[]] @($document))
         $linked = Get-InternalValue $linkResult 'Linked'
         $linkedBacklinks = Get-InternalValue $linkResult 'LinkedBacklinks'
         $failedBibliographyMatch = Get-InternalValue $linkResult 'FailedBibliographyMatch'
@@ -326,6 +341,8 @@ function Invoke-WordIntegrationCase {
         Assert-Equal $failedCitationRange 0 "$Name citation range failure count mismatch."
         Assert-FontSize $citationField.Result 12 "$Name link workflow changed citation font size."
         Assert-FontSize $bibliographyField.Result 11 "$Name link workflow changed bibliography font size."
+        Assert-FontColor $citationField.Result 0 "$Name link workflow changed citation color."
+        Assert-FontColor $bibliographyField.Result 0 "$Name link workflow changed bibliography color."
 
         $citeHyperlinks = 0
         $backlinks = 0
@@ -406,6 +423,8 @@ function Invoke-WordIntegrationCase {
         Assert-Equal $remainingCiteHyperlinks 0 "$Name remaining citation hyperlinks after remove mismatch."
         Assert-FontSize $citationField.Result 12 "$Name remove workflow changed citation font size."
         Assert-FontSize $bibliographyField.Result 11 "$Name remove workflow changed bibliography font size."
+        Assert-FontColor $citationField.Result 0 "$Name remove workflow changed citation color."
+        Assert-FontColor $bibliographyField.Result 0 "$Name remove workflow changed bibliography color."
 
         $formatMethod.Invoke($service, [object[]] @($document, $red)) | Out-Null
         Assert-FontSize $citationField.Result 12 "$Name repair workflow changed citation font size."
@@ -457,8 +476,7 @@ function Invoke-RepeatedRangeEndpointCase {
         $word.Visible = $false
         $document = $word.Documents.Open($docxPath)
 
-        $red = [System.Drawing.Color]::FromArgb(255, 0, 0)
-        $linkResult = $linkMethod.Invoke($service, [object[]] @($document, $red))
+        $linkResult = $linkMethod.Invoke($service, [object[]] @($document))
         Assert-Equal (Get-InternalValue $linkResult 'FailedBibliographyMatch') 0 "$name bibliography match failure count mismatch."
         Assert-Equal (Get-InternalValue $linkResult 'FailedCitationRange') 0 "$name citation range failure count mismatch."
 
@@ -519,8 +537,7 @@ function Invoke-ShortTitleBibliographyDisambiguationCase {
         $word.Visible = $false
         $document = $word.Documents.Open($docxPath)
 
-        $red = [System.Drawing.Color]::FromArgb(255, 0, 0)
-        $linkResult = $linkMethod.Invoke($service, [object[]] @($document, $red))
+        $linkResult = $linkMethod.Invoke($service, [object[]] @($document))
         Assert-Equal (Get-InternalValue $linkResult 'Linked') 1 "$name linked visible citation count mismatch."
         Assert-Equal (Get-InternalValue $linkResult 'LinkedBacklinks') 1 "$name linked bibliography backlink count mismatch."
         Assert-Equal (Get-InternalValue $linkResult 'FailedBibliographyMatch') 0 "$name bibliography match failure count mismatch."
@@ -568,6 +585,66 @@ function Invoke-ShortTitleBibliographyDisambiguationCase {
     }
 }
 
+function Invoke-DoiLinkCase {
+    $word = $null
+    $document = $null
+    $docxPath = Join-Path $env:TEMP ('zotero-linker-doi-' + [guid]::NewGuid().ToString('N') + '.docx')
+    $name = 'Word integration manual DOI hyperlink workflow'
+    try {
+        $item = New-TestItem -Id 7101 -Title 'DOI integration title' -Author 'Smith' -Year 2020
+        $citationCode = 'ADDIN ZOTERO_ITEM CSL_CITATION ' + (New-CitationJson -Items @($item))
+        $bibliographyText = @(
+            'Smith. Alpha. 2020. doi: 10.1000/alpha.',
+            'Jones. Beta. 2021. https://doi.org/10.2000/BETA-1.',
+            'Brown. Gamma. 2022. 10.3000/gamma).'
+        ) -join [Environment]::NewLine
+        New-MinimalWordPackage -Path $docxPath -CitationCode $citationCode -CitationText '(Smith, 2020)' -BibliographyText $bibliographyText
+
+        $word = New-Object -ComObject Word.Application
+        $word.Visible = $false
+        $document = $word.Documents.Open($docxPath)
+        Assert-Equal $document.Hyperlinks.Count 0 "$name should not contain DOI links before the manual action."
+
+        $result = $doiLinkMethod.Invoke($service, [object[]] @($document))
+        Assert-Equal (Get-InternalValue $result 'BibliographyFound') $true "$name bibliography detection mismatch."
+        Assert-Equal (Get-InternalValue $result 'Found') 3 "$name DOI match count mismatch."
+        Assert-Equal (Get-InternalValue $result 'Linked') 3 "$name linked DOI count mismatch."
+        Assert-Equal (Get-InternalValue $result 'SkippedExisting') 0 "$name unexpected existing DOI count mismatch."
+
+        $expected = @{
+            'doi: 10.1000/alpha' = 'https://doi.org/10.1000/alpha'
+            'https://doi.org/10.2000/BETA-1' = 'https://doi.org/10.2000/BETA-1'
+            '10.3000/gamma' = 'https://doi.org/10.3000/gamma'
+        }
+        foreach ($hyperlink in $document.Hyperlinks) {
+            $text = [string] $hyperlink.Range.Text
+            if (-not $expected.ContainsKey($text)) {
+                throw "$name unexpected hyperlink text [$text]."
+            }
+            Assert-Equal ([string] $hyperlink.Address) $expected[$text] "$name DOI hyperlink address mismatch for [$text]."
+        }
+
+        $secondResult = $doiLinkMethod.Invoke($service, [object[]] @($document))
+        Assert-Equal (Get-InternalValue $secondResult 'Linked') 0 "$name duplicate DOI links were created."
+        Assert-Equal (Get-InternalValue $secondResult 'SkippedExisting') 3 "$name existing DOI link count mismatch."
+        Assert-Equal $document.Hyperlinks.Count 3 "$name final hyperlink count mismatch."
+        Write-Host "PASS $name"
+    }
+    finally {
+        if ($document -ne $null) {
+            $document.Close($false)
+            [System.Runtime.InteropServices.Marshal]::ReleaseComObject($document) | Out-Null
+        }
+        if ($word -ne $null) {
+            $word.Quit()
+            [System.Runtime.InteropServices.Marshal]::ReleaseComObject($word) | Out-Null
+        }
+        if (Test-Path -LiteralPath $docxPath) {
+            Remove-Item -LiteralPath $docxPath -Force
+        }
+    }
+}
+
 $assembly = [System.Reflection.Assembly]::LoadFrom((Resolve-Path $AssemblyPath))
 $serviceType = $assembly.GetType('Zotero_linker.ZoteroLinkerService', $true)
 $service = [Activator]::CreateInstance($serviceType, $true)
@@ -575,8 +652,9 @@ $linkMethod = $serviceType.GetMethod('LinkCitations', [System.Reflection.Binding
 $removeMethod = $serviceType.GetMethod('RemoveCitationLinks', [System.Reflection.BindingFlags] 'NonPublic, Instance')
 $formatMethod = $serviceType.GetMethod('RestoreCitationFormatting', [System.Reflection.BindingFlags] 'NonPublic, Instance')
 $fontSizeMethod = $serviceType.GetMethod('ApplyCitationFontSize', [System.Reflection.BindingFlags] 'NonPublic, Instance')
+$doiLinkMethod = $serviceType.GetMethod('LinkBibliographyDois', [System.Reflection.BindingFlags] 'NonPublic, Instance')
 
-if ($null -eq $linkMethod -or $null -eq $removeMethod -or $null -eq $formatMethod -or $null -eq $fontSizeMethod) {
+if ($null -eq $linkMethod -or $null -eq $removeMethod -or $null -eq $formatMethod -or $null -eq $fontSizeMethod -or $null -eq $doiLinkMethod) {
     throw 'Required ZoteroLinkerService methods were not found. Build Debug configuration first.'
 }
 
@@ -705,5 +783,16 @@ Invoke-WordIntegrationCase `
     -ExpectedCitationTexts @('1', '4') `
     -ExpectedCitationItemIndexes @(0, 3)
 
+Invoke-WordIntegrationCase -Name 'Word integration APA parenthetical workflow' -CitationText '(Smith & Jones, 2020; Brown et al., 2021)' -Items @(
+    (New-TestItem -Id 7201 -Title 'APA alpha title' -Author 'Smith' -Year 2020),
+    (New-TestItem -Id 7202 -Title 'APA beta title' -Author 'Brown' -Year 2021)
+) -ExpectedLinked 2 -ExpectedBacklinks 2 -ExpectedCitationTexts @('Smith & Jones, 2020', 'Brown et al., 2021') -ExpectedCitationItemIndexes @(0, 1)
+
+Invoke-WordIntegrationCase -Name 'Word integration MLA author page workflow' -CitationText '(Smith 23; Jones 41)' -Items @(
+    (New-TestItem -Id 7301 -Title 'MLA alpha title' -Author 'Smith' -Year 2020),
+    (New-TestItem -Id 7302 -Title 'MLA beta title' -Author 'Jones' -Year 2021)
+) -ExpectedLinked 2 -ExpectedBacklinks 2 -ExpectedCitationTexts @('Smith 23', 'Jones 41') -ExpectedCitationItemIndexes @(0, 1)
+
 Invoke-RepeatedRangeEndpointCase
 Invoke-ShortTitleBibliographyDisambiguationCase
+Invoke-DoiLinkCase

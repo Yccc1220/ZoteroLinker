@@ -13,13 +13,13 @@ Builds the released Microsoft Word VSTO add-in installer with Inno Setup 6.
 
 ```batch
 cd installer
-build.bat 1.0.0 Release
+build.bat 1.0.5 Release
 ```
 
 Output:
 
 ```text
-dist\ZoteroLinkerWordSetup-1.0.0.exe
+dist\ZoteroLinkerWordSetup-1.0.5.exe
 ```
 
 ## What the installer does

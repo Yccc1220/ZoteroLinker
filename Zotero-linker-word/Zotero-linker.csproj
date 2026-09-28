@@ -281,6 +281,9 @@
   <ItemGroup>
     <None Include="Resources\PixPin_2026-06-16_15-05-24.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\PixPin_2026-09-28_15-51-16.png" />
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

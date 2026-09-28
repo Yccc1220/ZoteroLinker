@@ -99,5 +99,15 @@ namespace Zotero_linker.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+
+        /// <summary>
+        ///   查找 System.Drawing.Bitmap 类型的本地化资源。
+        /// </summary>
+        internal static System.Drawing.Bitmap PixPin_2026_09_28_15_51_16 {
+            get {
+                object obj = ResourceManager.GetObject("PixPin_2026-09-28_15-51-16", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }

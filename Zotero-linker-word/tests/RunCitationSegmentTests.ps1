@@ -15,6 +15,9 @@ $bookmarkMethod = $serviceType.GetMethod(
 $bibliographyAnchorMethod = $serviceType.GetMethod(
     'TestExtractBibliographyAnchorText',
     [System.Reflection.BindingFlags] 'NonPublic, Static')
+$doiMethod = $serviceType.GetMethod(
+    'TestExtractDoiMatches',
+    [System.Reflection.BindingFlags] 'NonPublic, Static')
 $legacyBookmarkMethod = $serviceType.GetMethod(
     'TestIsLegacyMacroBookmarkName',
     [System.Reflection.BindingFlags] 'NonPublic, Static')
@@ -29,6 +32,10 @@ if ($null -eq $bookmarkMethod) {
 
 if ($null -eq $bibliographyAnchorMethod) {
     throw 'TestExtractBibliographyAnchorText was not found. Build Debug configuration first.'
+}
+
+if ($null -eq $doiMethod) {
+    throw 'TestExtractDoiMatches was not found. Build Debug configuration first.'
 }
 
 if ($null -eq $legacyBookmarkMethod) {
@@ -154,6 +161,28 @@ function Assert-LegacyBookmarkName {
     Write-Host "PASS $Name"
 }
 
+function Assert-DoiMatches {
+    param(
+        [string] $Name,
+        [string] $Text,
+        [object[]] $Expected
+    )
+
+    $matches = @($doiMethod.Invoke($null, @($Text)))
+    Assert-Equal $matches.Count $Expected.Count "$Name DOI count mismatch."
+    for ($index = 0; $index -lt $Expected.Count; $index += 1) {
+        $match = $matches[$index]
+        $type = $match.GetType()
+        $start = [int] $type.GetProperty('StartOffset', [System.Reflection.BindingFlags] 'NonPublic, Instance').GetValue($match, $null)
+        $end = [int] $type.GetProperty('EndOffset', [System.Reflection.BindingFlags] 'NonPublic, Instance').GetValue($match, $null)
+        $doi = [string] $type.GetProperty('Doi', [System.Reflection.BindingFlags] 'NonPublic, Instance').GetValue($match, $null)
+        Assert-Equal $Text.Substring($start, $end - $start) $Expected[$index].Text "$Name DOI text mismatch at index $index."
+        Assert-Equal $doi $Expected[$index].Doi "$Name DOI value mismatch at index $index."
+    }
+
+    Write-Host "PASS $Name"
+}
+
 Assert-Segments `
     -Name 'numeric list' `
     -Text '[1, 2, 3]' `
@@ -236,6 +265,36 @@ Assert-Segments `
         @{ Text = '2021'; Visible = $true }
     )
 
+Assert-Segments -Name 'APA parenthetical multiple citations' -Text '(Smith & Jones, 2020; Brown et al., 2021)' -Count 2 -Expected @(
+    @{ Text = 'Smith & Jones, 2020'; Visible = $true },
+    @{ Text = 'Brown et al., 2021'; Visible = $true }
+)
+
+Assert-Segments -Name 'APA narrative citation' -Text 'Smith (2020)' -Count 1 -Expected @(
+    @{ Text = 'Smith (2020)'; Visible = $true }
+)
+
+Assert-Segments -Name 'APA narrative multiple citations' -Text 'Smith (2020); Jones (2021)' -Count 2 -Expected @(
+    @{ Text = 'Smith (2020)'; Visible = $true },
+    @{ Text = 'Jones (2021)'; Visible = $true }
+)
+
+Assert-Segments -Name 'MLA author page citations' -Text '(Smith 23; Jones 41)' -Count 2 -Expected @(
+    @{ Text = 'Smith 23'; Visible = $true },
+    @{ Text = 'Jones 41'; Visible = $true }
+)
+
+Assert-Segments -Name 'Chicago author date citations' -Text '(Smith 2020, 23; Jones 2021, 44)' -Count 2 -Expected @(
+    @{ Text = 'Smith 2020, 23'; Visible = $true },
+    @{ Text = 'Jones 2021, 44'; Visible = $true }
+)
+
+Assert-Segments -Name 'Vancouver unbracketed numeric citations' -Text '1, 2, 3' -Count 3 -Expected @(
+    @{ Text = '1'; Visible = $true },
+    @{ Text = '2'; Visible = $true },
+    @{ Text = '3'; Visible = $true }
+)
+
 Assert-BookmarkNamesDiffer
 
 Assert-BibliographyAnchor `
@@ -272,5 +331,15 @@ Assert-LegacyBookmarkName `
     -Name 'legacy macro bookmark rejects punctuation' `
     -BookmarkName 'Title-From-Macro' `
     -Expected $false
+
+Assert-DoiMatches -Name 'DOI labelled and URL forms' -Text 'Alpha. doi: 10.1000/alpha. Beta. https://doi.org/10.2000/BETA-1.' -Expected @(
+    @{ Text = 'doi: 10.1000/alpha'; Doi = '10.1000/alpha' },
+    @{ Text = 'https://doi.org/10.2000/BETA-1'; Doi = '10.2000/BETA-1' }
+)
+
+Assert-DoiMatches -Name 'DOI bare and balanced parentheses' -Text 'Gamma 10.3000/gamma). Delta 10.4000/test(abc).' -Expected @(
+    @{ Text = '10.3000/gamma'; Doi = '10.3000/gamma' },
+    @{ Text = '10.4000/test(abc)'; Doi = '10.4000/test(abc)' }
+)
 
 Write-Host 'All citation segment tests passed.'

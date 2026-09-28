@@ -1,5 +1,5 @@
 ; Zotero Linker Word - Inno Setup Installer
-; Build: iscc /DVersion=1.0.0 /DConfig=Release setup.iss
+; Build: iscc /DVersion=1.0.5 /DConfig=Release setup.iss
 
 #define AppName "Zotero Linker Word"
 #define AppPublisher "Yccc1220"
@@ -8,7 +8,7 @@
 #define AddInDescription "Zotero citation linker for Word"
 
 #ifndef Version
-  #define Version "1.0.0"
+  #define Version "1.0.5"
 #endif
 #ifndef Config
   #define Config "Release"

@@ -1,5 +1,6 @@
 using Microsoft.Office.Tools.Ribbon;
 using System;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Word = Microsoft.Office.Interop.Word;
 
@@ -14,6 +15,7 @@ namespace Zotero_linker
         private void ConfigureRuntimeLayout()
         {
             SetLargeControlSize(buttonLinkCitations);
+            SetLargeControlSize(buttonLinkDoi);
             SetLargeControlSize(buttonRemoveLinks);
             SetLargeControlSize(buttonRestoreFormatting);
             SetLargeControlSize(buttonOptions);
@@ -29,6 +31,11 @@ namespace Zotero_linker
             RemoveLinks();
         }
 
+        private void buttonLinkDoi_Click(object sender, RibbonControlEventArgs e)
+        {
+            LinkDois();
+        }
+
         private void buttonRestoreFormatting_Click(object sender, RibbonControlEventArgs e)
         {
             RestoreFormatting();
@@ -41,12 +48,9 @@ namespace Zotero_linker
 
         internal void LinkCitations()
         {
-            RunWithActiveDocument(document =>
+            RunWithActiveDocument("链接引文", document =>
             {
-                ZoteroLinkerOptions options = GetOptions();
-                LinkResult result = GetLinkerService().LinkCitations(
-                    document,
-                    options.CitationColor);
+                LinkResult result = GetLinkerService().LinkCitations(document);
 
                 ShowStatus(
                     "Link citations",
@@ -70,30 +74,38 @@ namespace Zotero_linker
 
         internal void RemoveLinks()
         {
-            RunWithActiveDocument(document =>
+            RunWithActiveDocument("移除链接", document =>
             {
                 RemoveResult result = GetLinkerService().RemoveCitationLinks(document);
-                ZoteroLinkerOptions options = GetOptions();
-                int changed = GetLinkerService().RestoreCitationFormatting(
-                    document,
-                    options.CitationColor);
                 ShowStatus(
                     "Remove links",
                     string.Format(
                         "Removed links {0}; bookmarks {1}",
                         result.LinksRemoved,
                         result.BookmarksRemoved),
-                    string.Format(
-                        "Reset fields {0}; repaired {1}; done",
-                        result.Recolored,
-                        changed),
+                    "Original colors, underlines and sizes preserved",
                     false);
+            });
+        }
+
+        internal void LinkDois()
+        {
+            RunWithActiveDocument("设置 DOI 超链接", document =>
+            {
+                DoiLinkResult result = GetLinkerService().LinkBibliographyDois(document);
+                ShowStatus(
+                    "Link DOI",
+                    result.BibliographyFound
+                        ? string.Format("DOI found {0}; linked {1}", result.Found, result.Linked)
+                        : "No Zotero bibliography found",
+                    string.Format("Existing links skipped {0}", result.SkippedExisting),
+                    !result.BibliographyFound);
             });
         }
 
         internal void RestoreFormatting()
         {
-            RunWithActiveDocument(document =>
+            RunWithActiveDocument("修复格式", document =>
             {
                 ZoteroLinkerOptions options = GetOptions();
                 int changed = GetLinkerService().RestoreCitationFormatting(
@@ -143,7 +155,7 @@ namespace Zotero_linker
                 options.Save();
                 Globals.ThisAddIn.RefreshOptions();
 
-                Word.Document document = Globals.ThisAddIn.Application.ActiveDocument;
+                Word.Document document = GetEditableActiveDocument();
                 int changed = document == null
                     ? 0
                     : GetLinkerService().RestoreCitationFormatting(document, options.CitationColor);
@@ -161,7 +173,7 @@ namespace Zotero_linker
             }
             catch (Exception ex)
             {
-                ShowOptionError(ex);
+                ShowOperationError("应用引文颜色", ex);
             }
         }
 
@@ -173,7 +185,7 @@ namespace Zotero_linker
                 options.Save();
                 Globals.ThisAddIn.RefreshOptions();
 
-                Word.Document document = Globals.ThisAddIn.Application.ActiveDocument;
+                Word.Document document = GetEditableActiveDocument();
                 if (document == null)
                 {
                     ShowStatus("Font size saved", "No active Word document", "Existing citation sizes unchanged", false);
@@ -203,17 +215,70 @@ namespace Zotero_linker
             }
             catch (Exception ex)
             {
-                ShowOptionError(ex);
+                ShowOperationError("应用引文字号", ex);
             }
         }
 
-        private static void ShowOptionError(Exception ex)
+        private static void ShowOperationError(string operationName, Exception ex)
         {
             MessageBox.Show(
-                ex.Message,
+                BuildOperationErrorMessage(operationName, ex),
                 "Zotero Linker",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
+        }
+
+        private static string BuildOperationErrorMessage(string operationName, Exception ex)
+        {
+            string operation = string.IsNullOrWhiteSpace(operationName) ? "当前操作" : operationName;
+            COMException comException = ex as COMException;
+            if (comException != null)
+            {
+                return string.Format(
+                    "{0}失败。Word 拒绝了对当前文档的修改（HRESULT 0x{1:X8}）。\r\n\r\n请先点击 Word 顶部的“启用编辑”，并关闭只读或文档保护后重试。",
+                    operation,
+                    unchecked((uint)comException.HResult));
+            }
+
+            return string.Format("{0}失败：{1}", operation, ex.Message);
+        }
+
+        private static Word.Document GetEditableActiveDocument()
+        {
+            Word.Application application = Globals.ThisAddIn.Application;
+            if (application == null)
+            {
+                return null;
+            }
+
+            // 受保护视图中的文件没有可写的 ActiveDocument，直接访问时 Word 通常只返回无上下文的 E_FAIL。
+            if (application.ActiveProtectedViewWindow != null)
+            {
+                throw new InvalidOperationException("当前文档处于受保护视图，请先点击“启用编辑”。");
+            }
+
+            if (application.Documents.Count == 0)
+            {
+                return null;
+            }
+
+            Word.Document document = application.ActiveDocument;
+            if (document == null)
+            {
+                return null;
+            }
+
+            if (document.ReadOnly)
+            {
+                throw new InvalidOperationException("当前文档为只读状态，请启用编辑后重试。");
+            }
+
+            if (document.ProtectionType != Word.WdProtectionType.wdNoProtection)
+            {
+                throw new InvalidOperationException("当前文档已启用编辑保护，请先停止保护后重试。");
+            }
+
+            return document;
         }
 
         private static void RefreshDocumentScreen(Word.Document document)
@@ -227,11 +292,11 @@ namespace Zotero_linker
             }
         }
 
-        private void RunWithActiveDocument(Action<Word.Document> action)
+        private void RunWithActiveDocument(string operationName, Action<Word.Document> action)
         {
             try
             {
-                Word.Document document = Globals.ThisAddIn.Application.ActiveDocument;
+                Word.Document document = GetEditableActiveDocument();
                 if (document == null)
                 {
                     ShowStatus("No document", "No active Word document.", " ", true);
@@ -242,11 +307,7 @@ namespace Zotero_linker
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    ex.Message,
-                    "Zotero Linker",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                ShowOperationError(operationName, ex);
             }
         }
 

@@ -38,6 +38,7 @@
             this.tab1 = this.Factory.CreateRibbonTab();
             this.groupCitationLinks = this.Factory.CreateRibbonGroup();
             this.buttonLinkCitations = this.Factory.CreateRibbonButton();
+            this.buttonLinkDoi = this.Factory.CreateRibbonButton();
             this.buttonRemoveLinks = this.Factory.CreateRibbonButton();
             this.buttonRestoreFormatting = this.Factory.CreateRibbonButton();
             this.buttonOptions = this.Factory.CreateRibbonButton();
@@ -63,6 +64,7 @@
             // groupCitationLinks
             // 
             this.groupCitationLinks.Items.Add(this.buttonLinkCitations);
+            this.groupCitationLinks.Items.Add(this.buttonLinkDoi);
             this.groupCitationLinks.Items.Add(this.buttonRemoveLinks);
             this.groupCitationLinks.Items.Add(this.buttonRestoreFormatting);
             this.groupCitationLinks.Items.Add(this.buttonOptions);
@@ -77,6 +79,15 @@
             this.buttonLinkCitations.OfficeImageId = "HyperlinkInsert";
             this.buttonLinkCitations.ShowImage = true;
             this.buttonLinkCitations.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.buttonLinkCitations_Click);
+            //
+            // buttonLinkDoi
+            //
+            this.buttonLinkDoi.Image = global::Zotero_linker.Properties.Resources.PixPin_2026_09_28_15_51_16;
+            this.buttonLinkDoi.Label = "Link DOI";
+            this.buttonLinkDoi.Name = "buttonLinkDoi";
+            this.buttonLinkDoi.OfficeImageId = "HyperlinkInsert";
+            this.buttonLinkDoi.ShowImage = true;
+            this.buttonLinkDoi.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.buttonLinkDoi_Click);
             // 
             // buttonRemoveLinks
             // 
@@ -166,6 +177,7 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonTab tab1;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup groupCitationLinks;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton buttonLinkCitations;
+        internal Microsoft.Office.Tools.Ribbon.RibbonButton buttonLinkDoi;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton buttonRemoveLinks;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton buttonRestoreFormatting;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton buttonOptions;

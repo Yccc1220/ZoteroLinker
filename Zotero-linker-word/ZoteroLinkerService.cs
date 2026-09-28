@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Office = Microsoft.Office.Core;
 using Word = Microsoft.Office.Interop.Word;
@@ -11,8 +12,11 @@ namespace Zotero_linker
     internal sealed class ZoteroLinkerService
     {
         private const float DefaultCitationFontSize = 10f;
+        private static readonly Regex DoiRegex = new Regex(
+            @"(?:https?://(?:dx\.)?doi\.org/\s*|doi\s*:\s*)?(10\.\d{4,9}/[-._;()/:A-Z0-9]+)",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-        internal LinkResult LinkCitations(Word.Document document, Color citationColor)
+        internal LinkResult LinkCitations(Word.Document document)
         {
             if (document == null)
             {
@@ -23,7 +27,6 @@ namespace Zotero_linker
             document.Application.ScreenUpdating = false;
             try
             {
-                EnsureZoteroHyperlinkStyles(document, citationColor);
                 RemoveCitationLinks(document);
 
                 ZoteroFields fields = LoadZoteroFields(document);
@@ -62,7 +65,7 @@ namespace Zotero_linker
                         CitationSegment backlinkSourceSegment = GetCitationBacklinkSourceSegment(segment);
                         Word.Range citationBacklinkRange = RangeFromOffsets(
                             document,
-                            citation.Field.Result,
+                            citation.Result,
                             backlinkSourceSegment.StartOffset,
                             backlinkSourceSegment.EndOffset);
 
@@ -75,7 +78,7 @@ namespace Zotero_linker
                         Word.Range citationRange = null;
                         if (segment.Visible)
                         {
-                            citationRange = RangeFromOffsets(document, citation.Field.Result, segment.StartOffset, segment.EndOffset);
+                            citationRange = RangeFromOffsets(document, citation.Result, segment.StartOffset, segment.EndOffset);
                             if (citationRange == null)
                             {
                                 result.FailedCitationRange += 1;
@@ -97,7 +100,6 @@ namespace Zotero_linker
                         {
                             string temporaryBookmarkName = BuildTemporaryCitationBookmarkName(pendingCitationLinks.Count);
                             AddOrReplaceBookmark(document, temporaryBookmarkName, citationRange);
-                            ApplyCitationFormatting(citationRange, citationColor);
                             pendingCitationLinks.Add(new PendingCitationLink(
                                 temporaryBookmarkName,
                                 bibliographyBookmarkName,
@@ -114,20 +116,20 @@ namespace Zotero_linker
                         }
 
                         Word.Range temporaryRange = document.Bookmarks[pendingLink.TemporaryBookmarkName].Range;
+                        RangeFormattingSnapshot formatting = CaptureRangeFormatting(temporaryRange);
                         Word.Hyperlink citationHyperlink = AddInternalHyperlink(
                             document,
                             temporaryRange,
                             pendingLink.BibliographyBookmarkName,
                             pendingLink.ScreenTip);
-                        ApplyCitationFormatting(citationHyperlink.Range, citationColor);
-                        ApplyCitationFormatting(temporaryRange, citationColor);
+                        RestoreRangeFormatting(SafeHyperlinkRange(citationHyperlink), formatting);
+                        RestoreRangeFormatting(temporaryRange, formatting);
                         document.Bookmarks[pendingLink.TemporaryBookmarkName].Delete();
                         result.Linked += 1;
                     }
                 }
 
                 result.LinkedBacklinks += AddPendingBibliographyBacklinks(document, pendingBibliographyBacklinks);
-                RestoreCitationFormatting(document, citationColor);
                 return result;
             }
             finally
@@ -150,20 +152,16 @@ namespace Zotero_linker
             for (int index = document.Hyperlinks.Count; index >= 1; index -= 1)
             {
                 Word.Hyperlink hyperlink = document.Hyperlinks[index];
-                string subAddress = NormalizeCiteName(hyperlink.SubAddress);
+                string subAddress = NormalizeCiteName(SafeHyperlinkSubAddress(hyperlink));
+                Word.Range hyperlinkRange = SafeHyperlinkRange(hyperlink);
                 bool isCurrentLink = IsCiteName(subAddress);
                 bool isLegacyMacroLink = !isCurrentLink &&
                     IsLegacyMacroBookmarkName(subAddress) &&
-                    RangeOverlapsAny(hyperlink.Range, citationRanges);
+                    RangeOverlapsAny(hyperlinkRange, citationRanges);
 
                 if (!isCurrentLink && !isLegacyMacroLink)
                 {
                     continue;
-                }
-
-                if (isCurrentLink && IsCitationBackBookmarkName(subAddress))
-                {
-                    ApplyBibliographyBacklinkFormatting(hyperlink.Range);
                 }
 
                 if (isLegacyMacroLink)
@@ -171,7 +169,9 @@ namespace Zotero_linker
                     legacyBookmarkNames.Add(subAddress);
                 }
 
+                RangeFormattingSnapshot formatting = CaptureRangeFormatting(hyperlinkRange);
                 hyperlink.Delete();
+                RestoreRangeFormatting(hyperlinkRange, formatting);
                 result.LinksRemoved += 1;
             }
 
@@ -182,17 +182,6 @@ namespace Zotero_linker
                 {
                     bookmark.Delete();
                     result.BookmarksRemoved += 1;
-                }
-            }
-
-            foreach (Word.Field field in document.Fields)
-            {
-                if (IsZoteroCitationCode(SafeFieldCode(field)))
-                {
-                    if (ResetZoteroFieldFormatting(field.Result))
-                    {
-                        result.Recolored += 1;
-                    }
                 }
             }
 
@@ -213,7 +202,7 @@ namespace Zotero_linker
             {
                 if (IsZoteroCitationCode(SafeFieldCode(field)))
                 {
-                    if (ApplyCitationFormatting(field.Result, citationColor))
+                    if (ApplyCitationFormatting(SafeFieldResult(field), citationColor))
                     {
                         changed += 1;
                     }
@@ -222,7 +211,7 @@ namespace Zotero_linker
 
             foreach (Word.Hyperlink hyperlink in document.Hyperlinks)
             {
-                string subAddress = NormalizeCiteName(hyperlink.SubAddress);
+                string subAddress = NormalizeCiteName(SafeHyperlinkSubAddress(hyperlink));
                 if (!IsCiteName(subAddress))
                 {
                     continue;
@@ -230,11 +219,11 @@ namespace Zotero_linker
 
                 if (IsCitationBackBookmarkName(subAddress))
                 {
-                    ApplyBibliographyBacklinkFormatting(hyperlink.Range);
+                    ApplyBibliographyBacklinkFormatting(SafeHyperlinkRange(hyperlink));
                 }
                 else
                 {
-                    if (ApplyCitationFormatting(hyperlink.Range, citationColor))
+                    if (ApplyCitationFormatting(SafeHyperlinkRange(hyperlink), citationColor))
                     {
                         changed += 1;
                     }
@@ -255,7 +244,7 @@ namespace Zotero_linker
             foreach (Word.Field field in document.Fields)
             {
                 if (IsZoteroCitationCode(SafeFieldCode(field)) &&
-                    ApplyCitationFontSize(field.Result, fontSize))
+                    ApplyCitationFontSize(SafeFieldResult(field), fontSize))
                 {
                     changed += 1;
                 }
@@ -263,16 +252,83 @@ namespace Zotero_linker
 
             foreach (Word.Hyperlink hyperlink in document.Hyperlinks)
             {
-                string subAddress = NormalizeCiteName(hyperlink.SubAddress);
+                string subAddress = NormalizeCiteName(SafeHyperlinkSubAddress(hyperlink));
                 if (IsCiteName(subAddress) &&
                     !IsCitationBackBookmarkName(subAddress) &&
-                    ApplyCitationFontSize(hyperlink.Range, fontSize))
+                    ApplyCitationFontSize(SafeHyperlinkRange(hyperlink), fontSize))
                 {
                     changed += 1;
                 }
             }
 
             return changed;
+        }
+
+        internal DoiLinkResult LinkBibliographyDois(Word.Document document)
+        {
+            if (document == null)
+            {
+                throw new InvalidOperationException("No active Word document.");
+            }
+
+            DoiLinkResult result = new DoiLinkResult();
+            Word.Range bibliographyRange = null;
+            foreach (Word.Field field in document.Fields)
+            {
+                if (IsZoteroBibliographyCode(SafeFieldCode(field)))
+                {
+                    bibliographyRange = SafeFieldResult(field);
+                    break;
+                }
+            }
+
+            if (bibliographyRange == null)
+            {
+                return result;
+            }
+
+            result.BibliographyFound = true;
+            string bibliographyText = SafeRangeText(bibliographyRange);
+            List<DoiMatch> matches = ExtractDoiMatches(bibliographyText);
+            result.Found = matches.Count;
+
+            HashSet<string> linkedDois = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (Word.Hyperlink hyperlink in document.Hyperlinks)
+            {
+                foreach (DoiMatch existingMatch in ExtractDoiMatches(SafeHyperlinkAddress(hyperlink)))
+                {
+                    linkedDois.Add(existingMatch.Doi);
+                }
+            }
+
+            foreach (DoiMatch match in matches)
+            {
+                if (linkedDois.Contains(match.Doi))
+                {
+                    result.SkippedExisting += 1;
+                    continue;
+                }
+
+                string displayText = bibliographyText.Substring(
+                    match.StartOffset,
+                    match.EndOffset - match.StartOffset);
+                Word.Range doiRange = FindFirstRange(bibliographyRange, displayText, true);
+                if (doiRange == null || SafeRangeContainsHyperlink(doiRange))
+                {
+                    result.SkippedExisting += 1;
+                    continue;
+                }
+
+                AddExternalHyperlink(
+                    document,
+                    doiRange,
+                    "https://doi.org/" + match.Doi,
+                    "Open DOI " + match.Doi);
+                linkedDois.Add(match.Doi);
+                result.Linked += 1;
+            }
+
+            return result;
         }
 
         internal void EnsureCitationLinkStyles(Word.Document document, Color citationColor)
@@ -297,7 +353,7 @@ namespace Zotero_linker
             int changed = 0;
             foreach (Word.Hyperlink hyperlink in document.Hyperlinks)
             {
-                string subAddress = NormalizeCiteName(hyperlink.SubAddress);
+                string subAddress = NormalizeCiteName(SafeHyperlinkSubAddress(hyperlink));
                 if (!IsCiteName(subAddress))
                 {
                     continue;
@@ -305,14 +361,14 @@ namespace Zotero_linker
 
                 if (IsCitationBackBookmarkName(subAddress))
                 {
-                    if (ApplyBibliographyBacklinkFormatting(hyperlink.Range))
+                    if (ApplyBibliographyBacklinkFormatting(SafeHyperlinkRange(hyperlink)))
                     {
                         changed += 1;
                     }
                 }
                 else
                 {
-                    if (ApplyCitationFormatting(hyperlink.Range, citationColor))
+                    if (ApplyCitationFormatting(SafeHyperlinkRange(hyperlink), citationColor))
                     {
                         changed += 1;
                     }
@@ -329,7 +385,7 @@ namespace Zotero_linker
                 return;
             }
 
-            string subAddress = NormalizeCiteName(hyperlink.SubAddress);
+            string subAddress = NormalizeCiteName(SafeHyperlinkSubAddress(hyperlink));
             if (!IsCiteName(subAddress))
             {
                 return;
@@ -337,11 +393,11 @@ namespace Zotero_linker
 
             if (IsCitationBackBookmarkName(subAddress))
             {
-                ApplyBibliographyBacklinkFormatting(hyperlink.Range);
+                ApplyBibliographyBacklinkFormatting(SafeHyperlinkRange(hyperlink));
             }
             else
             {
-                ApplyCitationFormatting(hyperlink.Range, citationColor);
+                ApplyCitationFormatting(SafeHyperlinkRange(hyperlink), citationColor);
             }
         }
 
@@ -351,13 +407,20 @@ namespace Zotero_linker
             foreach (Word.Field field in document.Fields)
             {
                 string code = SafeFieldCode(field);
+                Word.Range resultRange = SafeFieldResult(field);
+                if (resultRange == null)
+                {
+                    continue;
+                }
+
                 if (IsZoteroCitationCode(code))
                 {
                     fields.Citations.Add(new ZoteroFieldInfo
                     {
                         Field = field,
+                        Result = resultRange,
                         Code = code,
-                        Text = field.Result.Text ?? string.Empty,
+                        Text = SafeRangeText(resultRange),
                         CitationItems = ParseCitationItems(code)
                     });
                 }
@@ -382,7 +445,11 @@ namespace Zotero_linker
             {
                 if (IsZoteroCitationCode(SafeFieldCode(field)))
                 {
-                    ranges.Add(field.Result);
+                    Word.Range resultRange = SafeFieldResult(field);
+                    if (resultRange != null)
+                    {
+                        ranges.Add(resultRange);
+                    }
                 }
             }
 
@@ -396,7 +463,13 @@ namespace Zotero_linker
                 return null;
             }
 
-            string bibliographyText = bibliographyField.Result.Text ?? string.Empty;
+            Word.Range bibliographyResult = SafeFieldResult(bibliographyField);
+            if (bibliographyResult == null)
+            {
+                return null;
+            }
+
+            string bibliographyText = SafeRangeText(bibliographyResult);
             BibliographyEntryMatch bestMatch = null;
             foreach (BibliographyEntryMatch entry in EnumerateBibliographyEntries(bibliographyText))
             {
@@ -414,9 +487,9 @@ namespace Zotero_linker
 
             if (bestMatch != null)
             {
-                return bibliographyField.Result.Document.Range(
-                    bibliographyField.Result.Start + bestMatch.StartOffset,
-                    bibliographyField.Result.Start + bestMatch.EndOffset);
+                return bibliographyResult.Document.Range(
+                    bibliographyResult.Start + bestMatch.StartOffset,
+                    bibliographyResult.Start + bestMatch.EndOffset);
             }
 
             return null;
@@ -566,14 +639,15 @@ namespace Zotero_linker
             foreach (PendingBibliographyBacklinkRange pendingRange in ranges.OrderByDescending(range => range.Start))
             {
                 Word.Range backlinkRange = document.Range(pendingRange.Start, pendingRange.End);
+                RangeFormattingSnapshot formatting = CaptureRangeFormatting(backlinkRange);
                 Word.Hyperlink backlink = AddInternalHyperlink(
                     document,
                     backlinkRange,
                     pendingRange.CitationBookmarkName,
                     "Back to citation",
                     true);
-                ApplyBibliographyBacklinkFormatting(backlink.Range);
-                ApplyBibliographyBacklinkFormatting(backlinkRange);
+                RestoreRangeFormatting(SafeHyperlinkRange(backlink), formatting);
+                RestoreRangeFormatting(backlinkRange, formatting);
                 linked += 1;
             }
 
@@ -584,11 +658,55 @@ namespace Zotero_linker
         {
             Match numericPrefix = Regex.Match(
                 text ?? string.Empty,
-                @"^\s*((?:[\[\uff3b][0-9,\uff0c;\uff1b\s\-\u2010\u2011\u2012\u2013\u2014]+[\]\uff3d])|(?:[0-9]+(?:[.)]|\u3001|\uff0e|\uff1a|\uff09)?))(?:\s*(?:->|=>|\u2192|\u21d2))?");
+                @"^\s*((?:(?:[\[\uff3b][0-9,\uff0c;\uff1b\s\-\u2010\u2011\u2012\u2013\u2014]+[\]\uff3d])|(?:[0-9]+(?:[.)]|\u3001|\uff0e|\uff1a|\uff09)?))(?:\s*(?:->|=>|\u2192|\u21d2))?)");
 
             return numericPrefix.Success && numericPrefix.Groups[1].Length > 0
-                ? numericPrefix.Groups[1].Value
+                ? numericPrefix.Groups[1].Value.Trim()
                 : null;
+        }
+
+        private static List<DoiMatch> ExtractDoiMatches(string text)
+        {
+            List<DoiMatch> matches = new List<DoiMatch>();
+            foreach (Match match in DoiRegex.Matches(text ?? string.Empty))
+            {
+                string rawDoi = match.Groups[1].Value;
+                string doi = TrimDoiSuffix(rawDoi);
+                if (string.IsNullOrWhiteSpace(doi))
+                {
+                    continue;
+                }
+
+                matches.Add(new DoiMatch(
+                    match.Index,
+                    match.Index + match.Length - (rawDoi.Length - doi.Length),
+                    doi));
+            }
+
+            return matches;
+        }
+
+        private static string TrimDoiSuffix(string value)
+        {
+            string doi = (value ?? string.Empty).Trim().TrimEnd('.', ',', ';', ':');
+
+            // DOI 后常紧跟参考文献句号或右括号；仅移除没有对应左括号的结束符，保留 DOI 自身合法括号。
+            doi = TrimUnmatchedClosingCharacter(doi, '(', ')');
+            doi = TrimUnmatchedClosingCharacter(doi, '[', ']');
+            doi = TrimUnmatchedClosingCharacter(doi, '{', '}');
+            return doi;
+        }
+
+        private static string TrimUnmatchedClosingCharacter(string value, char opening, char closing)
+        {
+            string text = value ?? string.Empty;
+            while (text.EndsWith(closing.ToString(), StringComparison.Ordinal) &&
+                text.Count(character => character == closing) > text.Count(character => character == opening))
+            {
+                text = text.Substring(0, text.Length - 1);
+            }
+
+            return text;
         }
 
         private static List<string> BuildBibliographyBacklinkAnchorCandidates(string text, CitationItem item)
@@ -683,6 +801,11 @@ namespace Zotero_linker
         internal static string TestExtractBibliographyAnchorText(string bibliographyText)
         {
             return ExtractBibliographyAnchorText(bibliographyText ?? string.Empty) ?? string.Empty;
+        }
+
+        internal static List<DoiMatch> TestExtractDoiMatches(string text)
+        {
+            return ExtractDoiMatches(text);
         }
 
         internal static bool TestIsLegacyMacroBookmarkName(string bookmarkName)
@@ -1025,17 +1148,56 @@ namespace Zotero_linker
             int start = startOffset;
             int end = endOffset;
 
-            while (start < end && (char.IsWhiteSpace(text[start]) || IsOpeningCitationWrapper(text[start])))
+            while (start < end && char.IsWhiteSpace(text[start]))
             {
                 start += 1;
             }
 
-            while (end > start && (char.IsWhiteSpace(text[end - 1]) || IsClosingCitationWrapper(text[end - 1])))
+            while (end > start && char.IsWhiteSpace(text[end - 1]))
+            {
+                end -= 1;
+            }
+
+            while (end > start && IsMatchingCitationWrapper(text[start], text[end - 1]))
+            {
+                start += 1;
+                end -= 1;
+                while (start < end && char.IsWhiteSpace(text[start]))
+                {
+                    start += 1;
+                }
+                while (end > start && char.IsWhiteSpace(text[end - 1]))
+                {
+                    end -= 1;
+                }
+            }
+
+            while (start < end && IsOpeningCitationWrapper(text[start]) &&
+                !ContainsCharacter(text, GetMatchingClosingWrapper(text[start]), start + 1, end))
+            {
+                start += 1;
+            }
+
+            while (end > start && IsClosingCitationWrapper(text[end - 1]) &&
+                !ContainsCharacter(text, GetMatchingOpeningWrapper(text[end - 1]), start, end - 1))
             {
                 end -= 1;
             }
 
             return new CitationBounds(start, end);
+        }
+
+        private static bool ContainsCharacter(string text, char value, int startOffset, int endOffset)
+        {
+            for (int index = Math.Max(0, startOffset); index < Math.Min(text.Length, endOffset); index += 1)
+            {
+                if (text[index] == value)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static CitationSegment GetCitationBacklinkSourceSegment(CitationSegment segment)
@@ -1095,6 +1257,26 @@ namespace Zotero_linker
             return document.Hyperlinks.Add(range, ref address, ref sub, ref tip, ref textToDisplay, ref target);
         }
 
+        private static Word.Hyperlink AddExternalHyperlink(
+            Word.Document document,
+            Word.Range range,
+            string addressValue,
+            string screenTip)
+        {
+            object address = addressValue;
+            object subAddress = Type.Missing;
+            object tip = screenTip;
+            object textToDisplay = Type.Missing;
+            object target = Type.Missing;
+            return document.Hyperlinks.Add(
+                range,
+                ref address,
+                ref subAddress,
+                ref tip,
+                ref textToDisplay,
+                ref target);
+        }
+
         private static bool RangeOverlapsAny(Word.Range range, IEnumerable<Word.Range> ranges)
         {
             if (range == null || ranges == null)
@@ -1109,9 +1291,15 @@ namespace Zotero_linker
                     continue;
                 }
 
-                if (range.Start < candidate.End && range.End > candidate.Start)
+                try
                 {
-                    return true;
+                    if (range.Start < candidate.End && range.End > candidate.Start)
+                    {
+                        return true;
+                    }
+                }
+                catch (COMException)
+                {
                 }
             }
 
@@ -1160,6 +1348,43 @@ namespace Zotero_linker
             return FindAllRanges(sourceRange, query, matchCase).FirstOrDefault();
         }
 
+        private static RangeFormattingSnapshot CaptureRangeFormatting(Word.Range range)
+        {
+            if (range == null)
+            {
+                return null;
+            }
+
+            try
+            {
+                Word.Font font = range.Font;
+                return new RangeFormattingSnapshot(font.Color, font.Underline, font.Size);
+            }
+            catch (COMException)
+            {
+                return null;
+            }
+        }
+
+        private static void RestoreRangeFormatting(Word.Range range, RangeFormattingSnapshot formatting)
+        {
+            if (range == null || formatting == null)
+            {
+                return;
+            }
+
+            try
+            {
+                Word.Font font = range.Font;
+                font.Color = formatting.Color;
+                font.Underline = formatting.Underline;
+                font.Size = formatting.Size;
+            }
+            catch (COMException)
+            {
+            }
+        }
+
         private static bool ApplyCitationFormatting(Word.Range range, Color color)
         {
             if (range == null)
@@ -1167,11 +1392,19 @@ namespace Zotero_linker
                 return false;
             }
 
-            Word.Font font = range.Font;
-            bool changed = false;
-            changed |= SetFontColorIfNeeded(font, (Word.WdColor)ColorTranslator.ToOle(color));
-            changed |= SetFontUnderlineIfNeeded(font, Word.WdUnderline.wdUnderlineNone);
-            return changed;
+            try
+            {
+                Word.Font font = range.Font;
+                bool changed = false;
+                changed |= SetFontColorIfNeeded(font, (Word.WdColor)ColorTranslator.ToOle(color));
+                changed |= SetFontUnderlineIfNeeded(font, Word.WdUnderline.wdUnderlineNone);
+                return changed;
+            }
+            catch (COMException)
+            {
+                // Word 会对锁定域、受保护范围或失效超链接抛出 E_FAIL；跳过单个范围，继续处理其他引文。
+                return false;
+            }
         }
 
         private static bool ApplyCitationFontSize(Word.Range range, float fontSize)
@@ -1181,7 +1414,14 @@ namespace Zotero_linker
                 return false;
             }
 
-            return SetFontSizeIfNeeded(range.Font, fontSize);
+            try
+            {
+                return SetFontSizeIfNeeded(range.Font, fontSize);
+            }
+            catch (COMException)
+            {
+                return false;
+            }
         }
 
         private static bool ApplyBibliographyBacklinkFormatting(Word.Range range)
@@ -1191,12 +1431,19 @@ namespace Zotero_linker
                 return false;
             }
 
-            Word.Font font = range.Font;
-            bool changed = false;
-            changed |= SetFontColorIfNeeded(font, Word.WdColor.wdColorBlack);
-            changed |= SetFontColorIndexIfNeeded(font, Word.WdColorIndex.wdBlack);
-            changed |= SetFontUnderlineIfNeeded(font, Word.WdUnderline.wdUnderlineNone);
-            return changed;
+            try
+            {
+                Word.Font font = range.Font;
+                bool changed = false;
+                changed |= SetFontColorIfNeeded(font, Word.WdColor.wdColorBlack);
+                changed |= SetFontColorIndexIfNeeded(font, Word.WdColorIndex.wdBlack);
+                changed |= SetFontUnderlineIfNeeded(font, Word.WdUnderline.wdUnderlineNone);
+                return changed;
+            }
+            catch (COMException)
+            {
+                return false;
+            }
         }
 
         private static void EnsureZoteroHyperlinkStyles(Word.Document document, Color citationColor)
@@ -1256,20 +1503,6 @@ namespace Zotero_linker
             catch
             {
             }
-        }
-
-        private static bool ResetZoteroFieldFormatting(Word.Range range)
-        {
-            if (range == null)
-            {
-                return false;
-            }
-
-            Word.Font font = range.Font;
-            bool changed = false;
-            changed |= SetFontColorIndexIfNeeded(font, Word.WdColorIndex.wdAuto);
-            changed |= SetFontUnderlineIfNeeded(font, Word.WdUnderline.wdUnderlineNone);
-            return changed;
         }
 
         private static bool SetFontColorIfNeeded(Word.Font font, Word.WdColor color)
@@ -1772,6 +2005,78 @@ namespace Zotero_linker
             }
         }
 
+        private static Word.Range SafeFieldResult(Word.Field field)
+        {
+            try
+            {
+                return field == null ? null : field.Result;
+            }
+            catch (COMException)
+            {
+                return null;
+            }
+        }
+
+        private static Word.Range SafeHyperlinkRange(Word.Hyperlink hyperlink)
+        {
+            try
+            {
+                return hyperlink == null ? null : hyperlink.Range;
+            }
+            catch (COMException)
+            {
+                return null;
+            }
+        }
+
+        private static string SafeHyperlinkSubAddress(Word.Hyperlink hyperlink)
+        {
+            try
+            {
+                return hyperlink == null ? string.Empty : hyperlink.SubAddress ?? string.Empty;
+            }
+            catch (COMException)
+            {
+                return string.Empty;
+            }
+        }
+
+        private static string SafeHyperlinkAddress(Word.Hyperlink hyperlink)
+        {
+            try
+            {
+                return hyperlink == null ? string.Empty : hyperlink.Address ?? string.Empty;
+            }
+            catch (COMException)
+            {
+                return string.Empty;
+            }
+        }
+
+        private static bool SafeRangeContainsHyperlink(Word.Range range)
+        {
+            try
+            {
+                return range != null && range.Hyperlinks.Count > 0;
+            }
+            catch (COMException)
+            {
+                return false;
+            }
+        }
+
+        private static string SafeRangeText(Word.Range range)
+        {
+            try
+            {
+                return range == null ? string.Empty : range.Text ?? string.Empty;
+            }
+            catch (COMException)
+            {
+                return string.Empty;
+            }
+        }
+
         private static bool IsZoteroCitationCode(string code)
         {
             return Regex.IsMatch(code ?? string.Empty, "ADDIN\\s+ZOTERO_ITEM", RegexOptions.IgnoreCase);
@@ -1836,6 +2141,39 @@ namespace Zotero_linker
             return value == '[' || value == '\uff3b' || value == '(' || value == '{' || value == '\uff08' || value == '\u3014';
         }
 
+        private static bool IsMatchingCitationWrapper(char opening, char closing)
+        {
+            return GetMatchingClosingWrapper(opening) == closing;
+        }
+
+        private static char GetMatchingClosingWrapper(char opening)
+        {
+            switch (opening)
+            {
+                case '[': return ']';
+                case '\uff3b': return '\uff3d';
+                case '(': return ')';
+                case '{': return '}';
+                case '\uff08': return '\uff09';
+                case '\u3014': return '\u3015';
+                default: return '\0';
+            }
+        }
+
+        private static char GetMatchingOpeningWrapper(char closing)
+        {
+            switch (closing)
+            {
+                case ']': return '[';
+                case '\uff3d': return '\uff3b';
+                case ')': return '(';
+                case '}': return '{';
+                case '\uff09': return '\uff08';
+                case '\u3015': return '\u3014';
+                default: return '\0';
+            }
+        }
+
         private static bool IsClosingCitationWrapper(char value)
         {
             return value == ']' || value == '\uff3d' || value == ')' || value == '}' || value == '\uff09' || value == '\u3015';
@@ -1867,7 +2205,42 @@ namespace Zotero_linker
     {
         internal int LinksRemoved { get; set; }
         internal int BookmarksRemoved { get; set; }
-        internal int Recolored { get; set; }
+    }
+
+    internal sealed class DoiLinkResult
+    {
+        internal bool BibliographyFound { get; set; }
+        internal int Found { get; set; }
+        internal int Linked { get; set; }
+        internal int SkippedExisting { get; set; }
+    }
+
+    internal sealed class DoiMatch
+    {
+        internal DoiMatch(int startOffset, int endOffset, string doi)
+        {
+            StartOffset = startOffset;
+            EndOffset = endOffset;
+            Doi = doi;
+        }
+
+        internal int StartOffset { get; private set; }
+        internal int EndOffset { get; private set; }
+        internal string Doi { get; private set; }
+    }
+
+    internal sealed class RangeFormattingSnapshot
+    {
+        internal RangeFormattingSnapshot(Word.WdColor color, Word.WdUnderline underline, float size)
+        {
+            Color = color;
+            Underline = underline;
+            Size = size;
+        }
+
+        internal Word.WdColor Color { get; private set; }
+        internal Word.WdUnderline Underline { get; private set; }
+        internal float Size { get; private set; }
     }
 
     internal sealed class ZoteroFields
@@ -1884,6 +2257,7 @@ namespace Zotero_linker
     internal sealed class ZoteroFieldInfo
     {
         internal Word.Field Field { get; set; }
+        internal Word.Range Result { get; set; }
         internal string Code { get; set; }
         internal string Text { get; set; }
         internal List<CitationItem> CitationItems { get; set; }

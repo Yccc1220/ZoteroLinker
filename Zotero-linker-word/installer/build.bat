@@ -6,7 +6,7 @@ setlocal
 ::   config: Debug or Release (defaults to Release)
 
 set VERSION=%1
-if "%VERSION%"=="" set VERSION=1.0.0
+if "%VERSION%"=="" set VERSION=1.0.5
 
 set CONFIG=%2
 if "%CONFIG%"=="" set CONFIG=Release
